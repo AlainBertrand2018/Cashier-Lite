@@ -9,13 +9,13 @@ import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const [isClient, setIsClient] = useState(false);
-  const lastCompletedOrder = useStore((state) => state.lastCompletedOrder);
-  const resetToTenantSelection = useStore((state) => state.resetToTenantSelection);
-  const selectedTenantId = useStore((state) => state.selectedTenantId);
-
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const lastCompletedOrder = useStore((state) => state.lastCompletedOrder);
+  const resetToTenantSelection = useStore((state) => state.resetToTenantSelection);
+  const selectedTenantId = useStore((state) => state.selectedTenantId);
 
   if (!isClient) {
     return null; // or a loading spinner
@@ -24,7 +24,6 @@ export default function DashboardPage() {
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
     if (!isOpen) {
-      // When the receipt dialog is closed, reset for the next order.
       resetToTenantSelection();
     }
   };
