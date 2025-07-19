@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sync, BookOpen, LayoutDashboard } from 'lucide-react';
+import { RefreshCw, BookOpen, LayoutDashboard } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,7 @@ export default function AppHeader() {
       </nav>
       <div className="ml-auto flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
-          <Sync className="mr-2 h-4 w-4" />
+          <RefreshCw className="mr-2 h-4 w-4" />
           Sync Data
           {unsyncedCount > 0 && (
             <Badge variant="secondary" className="ml-2">
