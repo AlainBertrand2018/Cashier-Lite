@@ -51,6 +51,7 @@ export const useStore = create<AppState>()(
         set({
           currentOrder: [],
           selectedTenantId: null,
+          lastCompletedOrder: null,
         });
       },
 

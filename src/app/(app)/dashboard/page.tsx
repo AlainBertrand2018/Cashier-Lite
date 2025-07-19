@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const [isClient, setIsClient] = useState(false);
-  const { lastCompletedOrder, setLastCompletedOrder, selectedTenantId } = useStore();
+  const { lastCompletedOrder, resetToTenantSelection, selectedTenantId } = useStore();
 
   useEffect(() => {
     setIsClient(true);
@@ -18,7 +18,8 @@ export default function DashboardPage() {
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
     if (!isOpen) {
-      setLastCompletedOrder(null);
+      // When the receipt dialog is closed, reset for the next order.
+      resetToTenantSelection();
     }
   };
 
