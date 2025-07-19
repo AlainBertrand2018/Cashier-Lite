@@ -25,7 +25,7 @@ export default function AppHeader() {
   };
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, disabled: false },
+    { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
     { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
 
