@@ -21,14 +21,13 @@ interface ReceiptDialogProps {
 
 export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDialogProps) {
   const handlePrint = () => {
-    // This uses a CSS trick to hide everything but the receipt content when printing
     const printContents = document.getElementById('receipt-content')?.innerHTML;
     const originalContents = document.body.innerHTML;
     if (printContents) {
       document.body.innerHTML = printContents;
       window.print();
       document.body.innerHTML = originalContents;
-      window.location.reload(); // Reload to re-attach React components
+      window.location.reload(); 
     }
   };
 
@@ -66,64 +65,64 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-        <div id="receipt-content">
-          <style>
-            {`
-              @media print {
-                body * {
-                  visibility: hidden;
-                }
-                #receipt-content, #receipt-content * {
-                  visibility: visible;
-                }
-                #receipt-content {
-                  position: absolute;
-                  left: 0;
-                  top: 0;
-                  width: 100%;
-                }
-                .receipt-instance {
-                  page-break-after: always;
-                }
-                .receipt-instance:last-child {
-                  page-break-after: avoid;
-                }
-              }
-            `}
-          </style>
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" onInteractOutside={(e) => e.preventDefault()}>
+        <div className="flex-grow overflow-y-auto pr-6 -mr-6">
+            <div id="receipt-content">
+              <style>
+                {`
+                  @media print {
+                    body * {
+                      visibility: hidden;
+                    }
+                    #receipt-content, #receipt-content * {
+                      visibility: visible;
+                    }
+                    #receipt-content {
+                      position: absolute;
+                      left: 0;
+                      top: 0;
+                      width: 100%;
+                    }
+                    .receipt-instance {
+                      page-break-after: always;
+                    }
+                    .receipt-instance:last-child {
+                      page-break-after: avoid;
+                    }
+                  }
+                `}
+              </style>
 
-          {/* Customer Receipt */}
-          <div className="receipt-instance">
-            <DialogHeader className="items-center text-center">
-              <Logo className="h-10 w-10 text-primary mb-2" />
-              <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
-              <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <ReceiptBody order={order} />
-              <p className="text-center text-xs text-muted-foreground pt-4">
-                Thank you for your patronage!
-              </p>
-            </div>
-          </div>
+              <div className="receipt-instance">
+                <DialogHeader className="items-center text-center">
+                  <Logo className="h-10 w-10 text-primary mb-2" />
+                  <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
+                  <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <ReceiptBody order={order} />
+                  <p className="text-center text-xs text-muted-foreground pt-4">
+                    Thank you for your patronage!
+                  </p>
+                </div>
+              </div>
 
-          {/* Tenant Receipt */}
-          <div className="receipt-instance">
-            <DialogHeader className="items-center text-center">
-              <Logo className="h-10 w-10 text-primary mb-2" />
-              <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
-              <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <ReceiptBody order={order} />
-              <p className="text-center text-xs text-muted-foreground pt-4">
-                Fully Paid at {orderDate.toLocaleString()}
-              </p>
+              <div className="receipt-instance">
+                <DialogHeader className="items-center text-center">
+                  <Logo className="h-10 w-10 text-primary mb-2" />
+                  <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
+                  <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <ReceiptBody order={order} />
+                  <p className="text-center text-xs text-muted-foreground pt-4">
+                    Fully Paid at {orderDate.toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
-        <DialogFooter className="sm:justify-between gap-2 print:hidden">
+        <DialogFooter className="sm:justify-between gap-2 print:hidden pt-4 border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Re-Order
