@@ -18,7 +18,7 @@ export default function AppHeader() {
   const { toast } = useToast();
   
   const unsyncedCount = useStore(state => 
-    isClient ? state.completedOrders.filter(o => !o.synced).length : 0
+    state.completedOrders.filter(o => !o.synced).length
   );
 
   useEffect(() => {
@@ -36,16 +36,9 @@ export default function AppHeader() {
     { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
     { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
-
+  
   if (!isClient) {
-    return (
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <Logo className="h-6 w-6 text-primary" />
-          <span className="">FIDS Cashier Lite</span>
-        </Link>
-      </header>
-    );
+    return null;
   }
 
   return (
