@@ -6,11 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Printer, X } from 'lucide-react';
+import { Printer, RefreshCw } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import { Logo } from './icons';
 
@@ -94,8 +93,8 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
         </div>
         <DialogFooter className="sm:justify-between gap-2 print:hidden">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="mr-2 h-4 w-4" />
-            New Order
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Re-Order
           </Button>
           <Button type="button" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
