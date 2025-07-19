@@ -47,17 +47,17 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
             <div>
               <p className="font-medium">{item.name}</p>
               <p className="text-sm text-muted-foreground">
-                {item.quantity} x ${item.price.toFixed(2)}
+                {item.quantity} x Rs {item.price.toFixed(2)}
               </p>
             </div>
-            <p className="font-mono">${(item.quantity * item.price).toFixed(2)}</p>
+            <p className="font-mono">Rs {(item.quantity * item.price).toFixed(2)}</p>
           </div>
         ))}
       </div>
       <Separator />
       <div className="flex justify-between font-bold text-xl">
         <p>Total</p>
-        <p className="font-mono">${order.total.toFixed(2)}</p>
+        <p className="font-mono">Rs {order.total.toFixed(2)}</p>
       </div>
       <Separator />
     </>
@@ -125,7 +125,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
         <DialogFooter className="sm:justify-between gap-2 print:hidden pt-4 border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Re-Order
+            New Order
           </Button>
           <Button type="button" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />

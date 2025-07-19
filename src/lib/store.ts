@@ -22,15 +22,41 @@ interface AppState {
 }
 
 const initialProducts: Product[] = [
-    { id: '1', name: 'Jollof Rice & Chicken', price: 15.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'jollof rice', tenantId: '101', tenantName: 'Ghanaian Delights' },
-    { id: '2', name: 'Fried Rice & Beef', price: 16.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fried rice', tenantId: '101', tenantName: 'Ghanaian Delights' },
-    { id: '3', name: 'Waakye with Sides', price: 12.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'waakye ghana', tenantId: '101', tenantName: 'Ghanaian Delights' },
-    { id: '4', name: 'Banku & Tilapia', price: 20.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'banku tilapia', tenantId: '101', tenantName: 'Ghanaian Delights' },
-    { id: '5', name: 'Kelewele', price: 5.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'kelewele spicy', tenantId: '102', tenantName: 'Spicy Bites' },
-    { id: '6', name: 'Fufu & Light Soup', price: 18.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fufu soup', tenantId: '101', tenantName: 'Ghanaian Delights' },
-    { id: '7', name: 'Club Beer', price: 3.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'beer bottle', tenantId: '103', tenantName: 'Local Drinks' },
-    { id: '8', name: 'Bissap Drink', price: 2.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'hibiscus drink', tenantId: '103', tenantName: 'Local Drinks' },
-    { id: '9', name: 'Bottled Water', price: 1.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'water bottle', tenantId: '103', tenantName: 'Local Drinks' },
+    // Mauritius Fried Chicken
+    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
+    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
+    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
+
+    // Cannello Boulettes
+    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
+    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
+    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
+
+    // Nona Mada
+    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: 'T103', tenantName: 'Nona Mada' },
+    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: 'T103', tenantName: 'Nona Mada' },
+    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: 'T103', tenantName: 'Nona Mada' },
+    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: 'T103', tenantName: 'Nona Mada' },
+    
+    // Cuisines Réunionnaises
+    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
+    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
+    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
+    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
+
+    // La Renn SettKari
+    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
+    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
+    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
+    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
+    
+    // Arabian Delights
+    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
+    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
+    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
+
+    // Gadjak Soular
+    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: 'T107', tenantName: 'Gadjak Soular' },
 ];
 
 

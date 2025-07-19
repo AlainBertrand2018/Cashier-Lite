@@ -43,7 +43,7 @@ export default function OrderSummary() {
                 <div key={item.id} className="flex items-center justify-between gap-4">
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">Rs {item.price.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -70,7 +70,7 @@ export default function OrderSummary() {
         <Separator className="my-4" />
         <div className="flex justify-between font-bold text-lg">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>Rs {total.toFixed(2)}</span>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-2">

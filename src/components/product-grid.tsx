@@ -14,10 +14,7 @@ function ProductCard({ product }: { product: Product }) {
     >
       <CardContent className="flex-grow p-4 flex flex-col justify-center items-center text-center">
         <p className="text-lg font-semibold">{product.name}</p>
-        <p className="text-xl font-bold mt-1">${product.price.toFixed(2)}</p>
-        <p className="text-xs text-muted-foreground mt-2">
-          {product.tenantName} ({product.tenantId})
-        </p>
+        <p className="text-xl font-bold mt-1">Rs {product.price.toFixed(2)}</p>
       </CardContent>
     </Card>
   );

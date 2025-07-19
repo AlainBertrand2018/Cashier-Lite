@@ -67,7 +67,7 @@ export default function RevenueReport() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${grossRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">Rs {grossRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Total revenue from all orders</p>
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export default function RevenueReport() {
                         <div className="text-xs text-muted-foreground">ID: {report.id}</div>
                       </TableCell>
                       <TableCell className="text-center">{report.orderCount}</TableCell>
-                      <TableCell className="text-right font-mono">${report.totalRevenue.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                    {tenantReports.length === 0 && (
@@ -197,8 +197,8 @@ export default function RevenueReport() {
                     {tenantReports.map(report => (
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.name}</TableCell>
-                        <TableCell className="text-right font-mono">${report.tenantShare.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono">${report.organizerShare.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                     {tenantReports.length === 0 && (
@@ -228,8 +228,8 @@ export default function RevenueReport() {
                     {tenantReports.map(report => (
                       <TableRow key={report.id}>
                         <TableCell className="font-medium">{report.name}</TableCell>
-                        <TableCell className="text-right font-mono">${report.tenantShare.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono">${report.organizerShare.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -268,7 +268,7 @@ export default function RevenueReport() {
                         {order.synced ? "Synced" : "Local"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">${order.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">Rs {order.total.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
                 {sortedOrders.length === 0 && (
@@ -286,5 +286,3 @@ export default function RevenueReport() {
     </div>
   );
 }
-
-    
