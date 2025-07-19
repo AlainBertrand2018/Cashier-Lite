@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 export default function AppHeader() {
   const pathname = usePathname();
@@ -23,8 +25,8 @@ export default function AppHeader() {
   };
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/reports', label: 'Reports', icon: BookOpen },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, disabled: false },
+    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
 
   return (
@@ -33,21 +35,41 @@ export default function AppHeader() {
         <Logo className="h-6 w-6 text-primary" />
         <span className="">FIDS Cashier Lite</span>
       </Link>
-      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              'flex items-center gap-2 transition-colors hover:text-foreground',
-              pathname === link.href ? 'text-foreground' : 'text-muted-foreground'
-            )}
-          >
-            <link.icon className="h-4 w-4" />
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <TooltipProvider>
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          {navLinks.map((link) => {
+            const linkContent = (
+              <Link
+                key={link.href}
+                href={link.disabled ? '#' : link.href}
+                className={cn(
+                  'flex items-center gap-2 transition-colors hover:text-foreground',
+                  pathname === link.href && !link.disabled ? 'text-foreground' : 'text-muted-foreground',
+                  link.disabled && 'pointer-events-none text-muted-foreground/50'
+                )}
+                aria-disabled={link.disabled}
+                tabIndex={link.disabled ? -1 : undefined}
+              >
+                <link.icon className="h-4 w-4" />
+                {link.label}
+              </Link>
+            );
+
+            if (link.disabled) {
+              return (
+                <Tooltip key={link.href}>
+                  <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                  <TooltipContent>
+                    <p>Sync all data to view reports.</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return linkContent;
+          })}
+        </nav>
+      </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
           <RefreshCw className="mr-2 h-4 w-4" />
