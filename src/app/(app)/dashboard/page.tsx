@@ -9,7 +9,9 @@ import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const [isClient, setIsClient] = useState(false);
-  const { lastCompletedOrder, resetToTenantSelection, selectedTenantId } = useStore();
+  const lastCompletedOrder = useStore((state) => state.lastCompletedOrder);
+  const resetToTenantSelection = useStore((state) => state.resetToTenantSelection);
+  const selectedTenantId = useStore((state) => state.selectedTenantId);
 
   useEffect(() => {
     setIsClient(true);

@@ -12,11 +12,10 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect } from 'react';
 
-
 export default function AppHeader() {
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
   
   const unsyncedCount = useStore(state => 
     isClient ? state.completedOrders.filter(o => !o.synced).length : 0
@@ -26,7 +25,6 @@ export default function AppHeader() {
     setIsClient(true);
   }, []);
 
-
   const handleSync = () => {
     toast({
       title: 'Syncing...',
@@ -34,10 +32,14 @@ export default function AppHeader() {
     });
   };
 
+  const navLinks = [
+    { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
+    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
+  ];
+
   if (!isClient) {
     return (
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        {/* Render a skeleton or minimal header during SSR */}
          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <Logo className="h-6 w-6 text-primary" />
           <span className="">FIDS Cashier Lite</span>
@@ -45,11 +47,6 @@ export default function AppHeader() {
       </header>
     );
   }
-
-  const navLinks = [
-    { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
-    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
-  ];
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
