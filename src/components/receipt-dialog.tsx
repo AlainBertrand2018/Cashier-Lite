@@ -33,11 +33,41 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   };
 
   if (!order) return null;
+  const orderDate = new Date(order.createdAt);
+
+  const ReceiptBody = ({ order }: { order: Order }) => (
+    <>
+      <div className="text-sm text-muted-foreground">
+        <p>Order ID: {order.id}</p>
+        <p>Date: {orderDate.toLocaleString()}</p>
+      </div>
+      <Separator />
+      <div className="space-y-2">
+        {order.items.map((item) => (
+          <div key={item.id} className="flex justify-between items-baseline">
+            <div>
+              <p className="font-medium">{item.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {item.quantity} x ${item.price.toFixed(2)}
+              </p>
+            </div>
+            <p className="font-mono">${(item.quantity * item.price).toFixed(2)}</p>
+          </div>
+        ))}
+      </div>
+      <Separator />
+      <div className="flex justify-between font-bold text-xl">
+        <p>Total</p>
+        <p className="font-mono">${order.total.toFixed(2)}</p>
+      </div>
+      <Separator />
+    </>
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-        <div id="receipt-content" className="print:block">
+        <div id="receipt-content">
           <style>
             {`
               @media print {
@@ -53,42 +83,44 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   top: 0;
                   width: 100%;
                 }
+                .receipt-instance {
+                  page-break-after: always;
+                }
+                .receipt-instance:last-child {
+                  page-break-after: avoid;
+                }
               }
             `}
           </style>
-          <DialogHeader className="items-center text-center">
-            <Logo className="h-10 w-10 text-primary mb-2" />
-            <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
-            <p className="text-muted-foreground">Order Receipt</p>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="text-sm text-muted-foreground">
-              <p>Order ID: {order.id}</p>
-              <p>Date: {new Date(order.createdAt).toLocaleString()}</p>
+
+          {/* Customer Receipt */}
+          <div className="receipt-instance">
+            <DialogHeader className="items-center text-center">
+              <Logo className="h-10 w-10 text-primary mb-2" />
+              <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
+              <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <ReceiptBody order={order} />
+              <p className="text-center text-xs text-muted-foreground pt-4">
+                Thank you for your patronage!
+              </p>
             </div>
-            <Separator />
-            <div className="space-y-2">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between items-baseline">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.quantity} x ${item.price.toFixed(2)}
-                    </p>
-                  </div>
-                  <p className="font-mono">${(item.quantity * item.price).toFixed(2)}</p>
-                </div>
-              ))}
+          </div>
+
+          {/* Tenant Receipt */}
+          <div className="receipt-instance">
+            <DialogHeader className="items-center text-center">
+              <Logo className="h-10 w-10 text-primary mb-2" />
+              <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
+              <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <ReceiptBody order={order} />
+              <p className="text-center text-xs text-muted-foreground pt-4">
+                Fully Paid at {orderDate.toLocaleString()}
+              </p>
             </div>
-            <Separator />
-            <div className="flex justify-between font-bold text-xl">
-              <p>Total</p>
-              <p className="font-mono">${order.total.toFixed(2)}</p>
-            </div>
-            <Separator />
-            <p className="text-center text-xs text-muted-foreground pt-4">
-              Thank you for your patronage!
-            </p>
           </div>
         </div>
         <DialogFooter className="sm:justify-between gap-2 print:hidden">
