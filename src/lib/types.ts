@@ -3,6 +3,8 @@ export interface Product {
   name: string;
   price: number;
   imageUrl: string;
+  tenantId: string;
+  tenantName: string;
 }
 
 export interface OrderItem extends Product {
@@ -11,6 +13,7 @@ export interface OrderItem extends Product {
 
 export interface Order {
   id: string;
+  tenantId: string;
   items: OrderItem[];
   total: number;
   createdAt: number;

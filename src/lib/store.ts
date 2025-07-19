@@ -19,15 +19,15 @@ interface AppState {
 }
 
 const initialProducts: Product[] = [
-    { id: '1', name: 'Jollof Rice & Chicken', price: 15.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'jollof rice' },
-    { id: '2', name: 'Fried Rice & Beef', price: 16.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fried rice' },
-    { id: '3', name: 'Waakye with Sides', price: 12.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'waakye ghana' },
-    { id: '4', name: 'Banku & Tilapia', price: 20.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'banku tilapia' },
-    { id: '5', name: 'Kelewele', price: 5.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'kelewele spicy' },
-    { id: '6', name: 'Fufu & Light Soup', price: 18.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fufu soup' },
-    { id: '7', name: 'Club Beer', price: 3.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'beer bottle' },
-    { id: '8', name: 'Bissap Drink', price: 2.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'hibiscus drink' },
-    { id: '9', name: 'Bottled Water', price: 1.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'water bottle' },
+    { id: '1', name: 'Jollof Rice & Chicken', price: 15.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'jollof rice', tenantId: '101', tenantName: 'Ghanaian Delights' },
+    { id: '2', name: 'Fried Rice & Beef', price: 16.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fried rice', tenantId: '101', tenantName: 'Ghanaian Delights' },
+    { id: '3', name: 'Waakye with Sides', price: 12.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'waakye ghana', tenantId: '101', tenantName: 'Ghanaian Delights' },
+    { id: '4', name: 'Banku & Tilapia', price: 20.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'banku tilapia', tenantId: '101', tenantName: 'Ghanaian Delights' },
+    { id: '5', name: 'Kelewele', price: 5.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'kelewele spicy', tenantId: '102', tenantName: 'Spicy Bites' },
+    { id: '6', name: 'Fufu & Light Soup', price: 18.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'fufu soup', tenantId: '101', tenantName: 'Ghanaian Delights' },
+    { id: '7', name: 'Club Beer', price: 3.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'beer bottle', tenantId: '103', tenantName: 'Local Drinks' },
+    { id: '8', name: 'Bissap Drink', price: 2.50, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'hibiscus drink', tenantId: '103', tenantName: 'Local Drinks' },
+    { id: '9', name: 'Bottled Water', price: 1.00, imageUrl: 'https://placehold.co/300x200.png', "data-ai-hint": 'water bottle', tenantId: '103', tenantName: 'Local Drinks' },
 ];
 
 
@@ -41,6 +41,15 @@ export const useStore = create<AppState>()(
 
       addProductToOrder: (product) => {
         const { currentOrder } = get();
+        
+        // Ensure all items in the order are from the same tenant
+        if (currentOrder.length > 0 && currentOrder[0].tenantId !== product.tenantId) {
+          // In a real app, you might show a toast notification here.
+          // For now, we'll just log an error and prevent the action.
+          console.error("Cannot add products from different tenants to the same order.");
+          return;
+        }
+
         const existingItem = currentOrder.find((item) => item.id === product.id);
 
         if (existingItem) {
@@ -94,6 +103,7 @@ export const useStore = create<AppState>()(
         );
         const newOrder: Order = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          tenantId: currentOrder[0].tenantId, // All items are from the same tenant
           items: currentOrder,
           total,
           createdAt: Date.now(),
