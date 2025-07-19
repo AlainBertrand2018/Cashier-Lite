@@ -16,10 +16,11 @@ import { useState, useEffect } from 'react';
 export default function AppHeader() {
   const pathname = usePathname();
   const { toast } = useToast();
-  const {unsyncedCount} = useStore(state => ({
-    unsyncedCount: state.completedOrders.filter(o => !o.synced).length,
-  }));
   const [isClient, setIsClient] = useState(false);
+  
+  const unsyncedCount = useStore(state => 
+    isClient ? state.completedOrders.filter(o => !o.synced).length : 0
+  );
 
   useEffect(() => {
     setIsClient(true);
