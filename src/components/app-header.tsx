@@ -29,10 +29,10 @@ export default function AppHeader() {
       description: `Attempting to sync ${unsyncedCount} orders. (Sync logic not yet implemented)`,
     });
   };
-
+  
   const navLinks = [
     { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
-    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: isClient ? unsyncedCount > 0 : true },
+    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
 
   return (
@@ -46,13 +46,14 @@ export default function AppHeader() {
           <TooltipProvider>
             <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
               {navLinks.map((link) => {
+                const isActive = usePathname() === link.href;
                 const linkContent = (
                   <Link
                     key={link.href}
                     href={link.disabled ? '#' : link.href}
                     className={cn(
                       'flex items-center gap-2 transition-colors hover:text-foreground',
-                      usePathname() === link.href && !link.disabled ? 'text-foreground' : 'text-muted-foreground',
+                      isActive && !link.disabled ? 'text-foreground' : 'text-muted-foreground',
                       link.disabled && 'pointer-events-none text-muted-foreground/50'
                     )}
                     aria-disabled={link.disabled}
