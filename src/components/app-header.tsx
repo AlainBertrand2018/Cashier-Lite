@@ -16,7 +16,9 @@ import { useState, useEffect } from 'react';
 export default function AppHeader() {
   const pathname = usePathname();
   const { toast } = useToast();
-  const unsyncedCount = useStore((state) => state.completedOrders.filter(o => !o.synced).length);
+  const {unsyncedCount} = useStore(state => ({
+    unsyncedCount: state.completedOrders.filter(o => !o.synced).length,
+  }));
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -31,9 +33,21 @@ export default function AppHeader() {
     });
   };
 
+  if (!isClient) {
+    return (
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        {/* Render a skeleton or minimal header during SSR */}
+         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <Logo className="h-6 w-6 text-primary" />
+          <span className="">FIDS Cashier Lite</span>
+        </Link>
+      </header>
+    );
+  }
+
   const navLinks = [
     { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
-    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: isClient ? unsyncedCount > 0 : true },
+    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
 
   return (
@@ -78,10 +92,10 @@ export default function AppHeader() {
         </nav>
       </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={handleSync} disabled={!isClient || unsyncedCount === 0}>
+        <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Sync Data
-          {isClient && unsyncedCount > 0 && (
+          {unsyncedCount > 0 && (
             <Badge variant="secondary" className="ml-2">
               {unsyncedCount}
             </Badge>

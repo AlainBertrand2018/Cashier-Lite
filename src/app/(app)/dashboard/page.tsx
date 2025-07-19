@@ -14,6 +14,10 @@ export default function DashboardPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  if (!isClient) {
+    return null; // or a loading spinner
+  }
   
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
@@ -22,10 +26,6 @@ export default function DashboardPage() {
       resetToTenantSelection();
     }
   };
-
-  if (!isClient) {
-    return null; // or a loading spinner
-  }
   
   if (!selectedTenantId) {
     return <TenantSelectionGrid />;
