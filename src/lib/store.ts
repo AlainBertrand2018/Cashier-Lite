@@ -9,6 +9,7 @@ interface AppState {
   currentOrder: OrderItem[];
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
+  selectedTenantId: string | null;
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
@@ -16,6 +17,8 @@ interface AppState {
   completeOrder: () => void;
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
+  setSelectedTenantId: (tenantId: string | null) => void;
+  resetToTenantSelection: () => void;
 }
 
 const initialProducts: Product[] = [
@@ -38,14 +41,23 @@ export const useStore = create<AppState>()(
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
+      selectedTenantId: null,
+
+      setSelectedTenantId: (tenantId: string | null) => {
+        set({ selectedTenantId: tenantId });
+      },
+      
+      resetToTenantSelection: () => {
+        set({
+          currentOrder: [],
+          selectedTenantId: null,
+        });
+      },
 
       addProductToOrder: (product) => {
         const { currentOrder } = get();
         
-        // Ensure all items in the order are from the same tenant
         if (currentOrder.length > 0 && currentOrder[0].tenantId !== product.tenantId) {
-          // In a real app, you might show a toast notification here.
-          // For now, we'll just log an error and prevent the action.
           console.error("Cannot add products from different tenants to the same order.");
           return;
         }
@@ -103,7 +115,7 @@ export const useStore = create<AppState>()(
         );
         const newOrder: Order = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          tenantId: currentOrder[0].tenantId, // All items are from the same tenant
+          tenantId: currentOrder[0].tenantId,
           items: currentOrder,
           total,
           createdAt: Date.now(),
@@ -129,9 +141,10 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
-      // Only persist completed orders to prevent data loss.
-      // Current order is ephemeral.
-      partialize: (state) => ({ completedOrders: state.completedOrders }),
+      partialize: (state) => ({ 
+        completedOrders: state.completedOrders,
+        // Don't persist selected tenant
+      }),
     }
   )
 );

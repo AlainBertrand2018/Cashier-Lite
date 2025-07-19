@@ -38,11 +38,15 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 export default function ProductGrid() {
-  const products = useStore((state) => state.products);
+  const { products, selectedTenantId } = useStore();
+
+  const filteredProducts = products.filter(
+    (product) => product.tenantId === selectedTenantId
+  );
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {products.map((product) => (
+      {filteredProducts.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>

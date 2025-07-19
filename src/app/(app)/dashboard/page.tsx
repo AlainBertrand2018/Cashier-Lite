@@ -3,12 +3,13 @@
 import ProductGrid from '@/components/product-grid';
 import OrderSummary from '@/components/order-summary';
 import ReceiptDialog from '@/components/receipt-dialog';
+import TenantSelectionGrid from '@/components/tenant-selection-grid';
 import { useStore } from '@/lib/store';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const [isClient, setIsClient] = useState(false);
-  const { lastCompletedOrder, setLastCompletedOrder } = useStore();
+  const { lastCompletedOrder, setLastCompletedOrder, selectedTenantId } = useStore();
 
   useEffect(() => {
     setIsClient(true);
@@ -23,6 +24,10 @@ export default function DashboardPage() {
 
   if (!isClient) {
     return null; // or a loading spinner
+  }
+  
+  if (!selectedTenantId) {
+    return <TenantSelectionGrid />;
   }
 
   return (
