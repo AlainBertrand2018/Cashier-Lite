@@ -12,15 +12,14 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect } from 'react';
 
-export default function AppHeader() {
+function HeaderNavigation() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const unsyncedCount = useStore(state => 
-    state.completedOrders.filter(o => !o.synced).length
-  );
+  const pathname = usePathname();
+  const unsyncedCount = useStore(state => state.completedOrders.filter(o => !o.synced).length);
   const { toast } = useToast();
 
   const handleSync = () => {
@@ -35,63 +34,72 @@ export default function AppHeader() {
     { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
   ];
 
+  if (!isClient) {
+    return null;
+  }
+
+  return (
+    <>
+      <TooltipProvider>
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            const linkContent = (
+              <Link
+                key={link.href}
+                href={link.disabled ? '#' : link.href}
+                className={cn(
+                  'flex items-center gap-2 transition-colors hover:text-foreground',
+                  isActive && !link.disabled ? 'text-foreground' : 'text-muted-foreground',
+                  link.disabled && 'pointer-events-none text-muted-foreground/50'
+                )}
+                aria-disabled={link.disabled}
+                tabIndex={link.disabled ? -1 : undefined}
+              >
+                <link.icon className="h-4 w-4" />
+                {link.label}
+              </Link>
+            );
+
+            if (link.disabled) {
+              return (
+                <Tooltip key={link.href}>
+                  <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                  <TooltipContent>
+                    <p>Sync all data to view reports.</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return linkContent;
+          })}
+        </nav>
+      </TooltipProvider>
+      <div className="ml-auto flex items-center gap-4">
+        <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Sync Data
+          {unsyncedCount > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {unsyncedCount}
+            </Badge>
+          )}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+
+export default function AppHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
         <Logo className="h-6 w-6 text-primary" />
         <span className="">FIDS Cashier Lite</span>
       </Link>
-      {isClient && (
-        <>
-          <TooltipProvider>
-            <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-              {navLinks.map((link) => {
-                const isActive = usePathname() === link.href;
-                const linkContent = (
-                  <Link
-                    key={link.href}
-                    href={link.disabled ? '#' : link.href}
-                    className={cn(
-                      'flex items-center gap-2 transition-colors hover:text-foreground',
-                      isActive && !link.disabled ? 'text-foreground' : 'text-muted-foreground',
-                      link.disabled && 'pointer-events-none text-muted-foreground/50'
-                    )}
-                    aria-disabled={link.disabled}
-                    tabIndex={link.disabled ? -1 : undefined}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                );
-
-                if (link.disabled) {
-                  return (
-                    <Tooltip key={link.href}>
-                      <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                      <TooltipContent>
-                        <p>Sync all data to view reports.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                }
-
-                return linkContent;
-              })}
-            </nav>
-          </TooltipProvider>
-          <div className="ml-auto flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Sync Data
-              {unsyncedCount > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {unsyncedCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
-        </>
-      )}
+      <HeaderNavigation />
     </header>
   );
 }
