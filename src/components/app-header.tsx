@@ -10,12 +10,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect } from 'react';
 
 
 export default function AppHeader() {
   const pathname = usePathname();
   const { toast } = useToast();
   const unsyncedCount = useStore((state) => state.completedOrders.filter(o => !o.synced).length);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleSync = () => {
     toast({
@@ -26,7 +33,7 @@ export default function AppHeader() {
 
   const navLinks = [
     { href: '/dashboard', label: 'New Order', icon: LayoutDashboard, disabled: false },
-    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: unsyncedCount > 0 },
+    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen, disabled: isClient ? unsyncedCount > 0 : true },
   ];
 
   return (
@@ -71,10 +78,10 @@ export default function AppHeader() {
         </nav>
       </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
+        <Button variant="outline" size="sm" onClick={handleSync} disabled={!isClient || unsyncedCount === 0}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Sync Data
-          {unsyncedCount > 0 && (
+          {isClient && unsyncedCount > 0 && (
             <Badge variant="secondary" className="ml-2">
               {unsyncedCount}
             </Badge>
