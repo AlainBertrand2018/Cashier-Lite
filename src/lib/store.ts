@@ -72,6 +72,10 @@ export const useStore = create<AppState>()(
       selectedTenantId: null,
 
       setSelectedTenantId: (tenantId: string | null) => {
+        // When changing tenants, clear the current order.
+        if (get().selectedTenantId !== tenantId) {
+          set({ currentOrder: [] });
+        }
         set({ selectedTenantId: tenantId });
       },
       
@@ -135,8 +139,8 @@ export const useStore = create<AppState>()(
       },
       
       completeOrder: () => {
-        const { currentOrder } = get();
-        if (currentOrder.length === 0) return;
+        const { currentOrder, selectedTenantId } = get();
+        if (currentOrder.length === 0 || !selectedTenantId) return;
 
         const total = currentOrder.reduce(
           (sum, item) => sum + item.price * item.quantity,
@@ -144,7 +148,7 @@ export const useStore = create<AppState>()(
         );
         const newOrder: Order = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          tenantId: currentOrder[0].tenantId,
+          tenantId: selectedTenantId,
           items: currentOrder,
           total,
           createdAt: Date.now(),

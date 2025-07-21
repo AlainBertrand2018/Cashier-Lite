@@ -1,25 +1,18 @@
 'use client';
 
-import ProductGrid from '@/components/product-grid';
-import OrderSummary from '@/components/order-summary';
-import ReceiptDialog from '@/components/receipt-dialog';
 import TenantSelectionGrid from '@/components/tenant-selection-grid';
 import { useStore } from '@/lib/store';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import ReceiptDialog from '@/components/receipt-dialog';
 
 export default function DashboardPage() {
-  const [isClient, setIsClient] = useState(false);
+  // This effect resets the selected tenant when the user navigates back to the dashboard.
   useEffect(() => {
-    setIsClient(true);
+    useStore.getState().setSelectedTenantId(null);
   }, []);
 
   const lastCompletedOrder = useStore((state) => state.lastCompletedOrder);
   const resetToTenantSelection = useStore((state) => state.resetToTenantSelection);
-  const selectedTenantId = useStore((state) => state.selectedTenantId);
-
-  if (!isClient) {
-    return null; // or a loading spinner
-  }
   
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
@@ -27,21 +20,10 @@ export default function DashboardPage() {
       resetToTenantSelection();
     }
   };
-  
-  if (!selectedTenantId) {
-    return <TenantSelectionGrid />;
-  }
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-5">
-          <ProductGrid />
-        </div>
-        <div className="lg:col-span-2">
-          <OrderSummary />
-        </div>
-      </div>
+      <TenantSelectionGrid />
       <ReceiptDialog 
         isOpen={isReceiptOpen}
         onOpenChange={setReceiptOpen}
