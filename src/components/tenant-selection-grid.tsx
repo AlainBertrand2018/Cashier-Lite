@@ -1,12 +1,30 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import AddTenantDialog from './add-tenant-dialog';
 import Link from 'next/link';
 import type { Tenant } from '@/lib/types';
+
+function TenantCard({ tenant }: { tenant: Tenant }) {
+  return (
+    <Link href={`/tenants/${tenant.id}`} passHref>
+      <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
+        <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
+          <div className="text-6xl font-bold tracking-tighter mb-2">{tenant.id}</div>
+          <div className="font-semibold text-lg">{tenant.name}</div>
+          {tenant.mobile && (
+            <div className="text-muted-foreground">{tenant.mobile}</div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 
 export default function TenantSelectionGrid() {
   const tenants = useStore((state) => state.tenants.sort((a, b) => a.name.localeCompare(b.name)));
@@ -20,25 +38,16 @@ export default function TenantSelectionGrid() {
           <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {tenants.map((tenant: Tenant) => (
-              <Link key={tenant.id} href={`/tenants/${tenant.id}`} passHref>
-                <Card
-                  className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full"
-                >
-                  <CardHeader className="flex flex-col items-center justify-center text-center p-4 h-32">
-                    <CardTitle className="text-lg font-semibold">{tenant.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">ID: {tenant.id}</p>
-                  </CardHeader>
-                </Card>
-              </Link>
+              <TenantCard key={tenant.id} tenant={tenant} />
             ))}
             <Card
               onClick={() => setAddTenantOpen(true)}
-              className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary"
+              className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary min-h-[180px]"
             >
-              <CardHeader className="flex flex-col items-center justify-center text-center p-4 h-32">
+              <CardContent className="flex flex-col items-center justify-center text-center p-4">
                 <PlusCircle className="h-10 w-10 mb-2" />
-                <CardTitle className="text-lg font-semibold">Add Tenant</CardTitle>
-              </CardHeader>
+                <div className="text-lg font-semibold">Add Tenant</div>
+              </CardContent>
             </Card>
           </div>
         </div>

@@ -30,50 +30,50 @@ interface AppState {
 
 const initialProducts: Omit<Product, 'tenantName'>[] = [
     // Mauritius Fried Chicken
-    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'T101' },
-    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'T101' },
-    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'T101' },
+    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: '101' },
+    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: '101' },
+    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: '101' },
 
     // Cannello Boulettes
-    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: 'T102' },
-    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: 'T102' },
-    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: 'T102' },
+    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: '102' },
+    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: '102' },
+    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: '102' },
 
     // Nona Mada
-    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: 'T103' },
-    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: 'T103' },
-    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: 'T103' },
-    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: 'T103' },
+    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: '103' },
+    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: '103' },
+    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: '103' },
+    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: '103' },
     
     // Cuisines Réunionnaises
-    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: 'T104' },
-    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: 'T104' },
-    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: 'T104' },
-    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: 'T104' },
+    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: '104' },
+    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: '104' },
+    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: '104' },
+    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: '104' },
 
     // La Renn SettKari
-    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: 'T105' },
-    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: 'T105' },
-    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: 'T105' },
-    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: 'T105' },
+    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: '105' },
+    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: '105' },
+    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: '105' },
+    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: '105' },
     
     // Arabian Delights
-    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: 'T106' },
-    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: 'T106' },
-    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: 'T106' },
+    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: '106' },
+    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: '106' },
+    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: '106' },
 
     // Gadjak Soular
-    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: 'T107' },
+    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: '107' },
 ];
 
 const initialTenants: Tenant[] = [
-    { id: 'T101', name: 'Mauritius Fried Chicken', responsibleParty: 'Mr. Sanders' },
-    { id: 'T102', name: 'Cannello Boulettes', responsibleParty: 'Mrs. Cannello' },
-    { id: 'T103', name: 'Nona Mada', responsibleParty: 'Nona' },
-    { id: 'T104', name: 'Cuisines Réunionnaises', responsibleParty: 'Chef Laurent' },
-    { id: 'T105', name: 'La Renn SettKari', responsibleParty: 'La Renn' },
-    { id: 'T106', name: 'Arabian Delights', responsibleParty: 'Mr. Ali' },
-    { id: 'T107', name: 'Gadjak Soular', responsibleParty: 'Mme. Soular' },
+    { id: '101', name: 'Mauritius Fried Chicken', responsibleParty: 'Mr. Sanders', mobile: '51234567' },
+    { id: '102', name: 'Cannello Boulettes', responsibleParty: 'Mrs. Cannello', mobile: '52345678' },
+    { id: '103', name: 'Nona Mada', responsibleParty: 'Nona', mobile: '53456789' },
+    { id: '104', name: 'Cuisines Réunionnaises', responsibleParty: 'Chef Laurent', mobile: '54567890' },
+    { id: '105', name: 'La Renn SettKari', responsibleParty: 'La Renn', mobile: '55678901' },
+    { id: '106', name: 'Arabian Delights', responsibleParty: 'Mr. Ali', mobile: '56789012' },
+    { id: '107', name: 'Gadjak Soular', responsibleParty: 'Mme. Soular', mobile: '57890123' },
 ];
 
 
@@ -187,7 +187,7 @@ export const useStore = create<AppState>()(
         }));
       },
 
-      markOrdersAsSynced: (orderIds) => {
+      markOrdersAsSynced: (orderIds: string[]) => {
         set((state) => ({
           completedOrders: state.completedOrders.map((order) => 
             orderIds.includes(order.id) ? { ...order, synced: true } : order
@@ -204,9 +204,9 @@ export const useStore = create<AppState>()(
           return existingTenant?.id || '';
         }
 
-        const tenantIds = tenants.map(p => parseInt(p.id.substring(1), 10));
+        const tenantIds = tenants.map(p => parseInt(p.id, 10));
         const maxId = Math.max(0, ...tenantIds);
-        const newTenantId = `T${maxId + 1}`;
+        const newTenantId = `${maxId + 1}`;
         
         const newTenant: Tenant = {
           id: newTenantId,
