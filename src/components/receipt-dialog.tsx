@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -37,7 +38,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   const ReceiptBody = ({ order }: { order: Order }) => (
     <>
       <div className="text-sm text-muted-foreground">
-        <p>Order ID: {order.id}</p>
+        <p>Order ID: {order.id.split('-')[1]}</p>
         <p>Date: {orderDate.toLocaleString()}</p>
       </div>
       <Separator />
