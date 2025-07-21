@@ -19,6 +19,7 @@ interface AppState {
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: string | null) => void;
   resetToTenantSelection: () => void;
+  addTenant: (name: string) => string;
 }
 
 const initialProducts: Product[] = [
@@ -162,6 +163,27 @@ export const useStore = create<AppState>()(
             orderIds.includes(order.id) ? { ...order, synced: true } : order
           )
         }))
+      },
+
+      addTenant: (name: string) => {
+        const { products } = get();
+        const tenantIds = products.map(p => parseInt(p.tenantId.substring(1), 10));
+        const maxId = Math.max(0, ...tenantIds);
+        const newTenantId = `T${maxId + 1}`;
+        
+        const newProduct: Product = {
+          id: `prod-${Date.now()}`,
+          name: 'New Item', // Placeholder product
+          price: 0,
+          tenantId: newTenantId,
+          tenantName: name,
+        };
+
+        set(state => ({
+          products: [...state.products, newProduct]
+        }));
+        
+        return newTenantId;
       }
 
     }),
@@ -170,7 +192,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        // Don't persist selected tenant
+        products: state.products, // Persist new tenants
       }),
     }
   )
