@@ -9,7 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function TenantPage({ params }: { params: { tenantId: string } }) {
-  const { tenantId } = params;
+  const tenantId = params.tenantId;
   const { setSelectedTenantId, products } = useStore();
 
   useEffect(() => {
