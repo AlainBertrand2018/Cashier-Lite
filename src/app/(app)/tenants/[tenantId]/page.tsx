@@ -8,12 +8,19 @@ import OrderSummary from '@/components/order-summary';
 import Link from 'next/link';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import ReceiptDialog from '@/components/receipt-dialog';
 
 export default function TenantPage() {
   const params = useParams();
+  const router = useRouter();
   const tenantId = params.tenantId as string;
-  const { setSelectedTenantId, products } = useStore();
+  const { 
+    setSelectedTenantId, 
+    products, 
+    lastCompletedOrder,
+    resetToTenantSelection,
+  } = useStore();
 
   useEffect(() => {
     // Set the selected tenant in the store when the page loads
@@ -22,6 +29,14 @@ export default function TenantPage() {
 
   const tenant = products.find(p => p.tenantId === tenantId);
   const tenantName = tenant ? tenant.tenantName : 'Tenant';
+
+  const isReceiptOpen = !!lastCompletedOrder;
+  const setReceiptOpen = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetToTenantSelection();
+      router.push('/dashboard');
+    }
+  };
 
   return (
     <>
@@ -52,6 +67,11 @@ export default function TenantPage() {
           <OrderSummary />
         </div>
       </div>
+       <ReceiptDialog 
+        isOpen={isReceiptOpen}
+        onOpenChange={setReceiptOpen}
+        order={lastCompletedOrder}
+      />
     </>
   );
 }
