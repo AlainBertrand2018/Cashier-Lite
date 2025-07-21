@@ -7,9 +7,11 @@ import OrderSummary from '@/components/order-summary';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useParams } from 'next/navigation';
 
-export default function TenantPage({ params }: { params: { tenantId: string } }) {
-  const tenantId = params.tenantId;
+export default function TenantPage() {
+  const params = useParams();
+  const tenantId = params.tenantId as string;
   const { setSelectedTenantId, products } = useStore();
 
   useEffect(() => {
