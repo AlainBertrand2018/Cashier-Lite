@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DollarSign, Hash, CheckCircle, Clock, Printer, Users } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import type { Product } from '@/lib/types';
+import type { Tenant } from '@/lib/types';
 
 interface TenantReport {
   id: string;
@@ -20,7 +20,7 @@ interface TenantReport {
 }
 
 export default function RevenueReport() {
-  const { completedOrders, products } = useStore();
+  const { completedOrders, tenants } = useStore();
 
   const grossRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
   const totalOrders = completedOrders.length;
@@ -28,10 +28,6 @@ export default function RevenueReport() {
   const pendingSyncOrders = totalOrders - syncedOrders;
 
   const sortedOrders = [...completedOrders].sort((a, b) => b.createdAt - a.createdAt);
-
-  const tenants = Array.from(
-    new Map(products.map((p: Product) => [p.tenantId, { id: p.tenantId, name: p.tenantName }])).values()
-  );
 
   const tenantReports = tenants.map(tenant => {
     const ordersForTenant = completedOrders.filter(o => o.tenantId === tenant.id);

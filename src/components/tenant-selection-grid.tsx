@@ -6,15 +6,11 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import AddTenantDialog from './add-tenant-dialog';
 import Link from 'next/link';
+import type { Tenant } from '@/lib/types';
 
 export default function TenantSelectionGrid() {
-  const { products } = useStore();
+  const tenants = useStore((state) => state.tenants.sort((a, b) => a.name.localeCompare(b.name)));
   const [isAddTenantOpen, setAddTenantOpen] = useState(false);
-
-  // Derive tenants from the product list, ensuring each tenant appears only once.
-  const tenants = Array.from(
-    new Map(products.map((p) => [p.tenantId, { id: p.tenantId, name: p.tenantName }])).values()
-  ).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
@@ -23,7 +19,7 @@ export default function TenantSelectionGrid() {
           <h1 className="text-3xl font-bold tracking-tight mb-2">Select a Tenant</h1>
           <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {tenants.map((tenant) => (
+            {tenants.map((tenant: Tenant) => (
               <Link key={tenant.id} href={`/tenants/${tenant.id}`} passHref>
                 <Card
                   className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full"

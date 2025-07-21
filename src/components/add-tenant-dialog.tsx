@@ -23,11 +23,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: 'Tenant name must be at least 2 characters.',
   }),
+  responsibleParty: z.string().min(2, {
+    message: 'Responsible party must be at least 2 characters.',
+  }),
+  brn: z.string().optional(),
+  vat: z.string().optional(),
+  mobile: z.string().optional(),
+  address: z.string().optional(),
 });
 
 interface AddTenantDialogProps {
@@ -43,11 +51,16 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      responsibleParty: '',
+      brn: '',
+      vat: '',
+      mobile: '',
+      address: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const newTenantId = addTenant(values.name);
+    const newTenantId = addTenant(values);
     toast({
       title: 'Tenant Added',
       description: `Tenant "${values.name}" with ID ${newTenantId} has been created.`,
@@ -58,23 +71,92 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New Tenant</DialogTitle>
           <DialogDescription>
-            Enter the name for the new tenant. A unique ID will be generated automatically.
+            Enter the details for the new tenant. Fields marked with an asterisk are required.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Tenant Name *</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Mama's Kitchen" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="responsibleParty"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Responsible Party *</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="brn"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>BRN</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Business Registration No." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="vat"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>VAT Number</FormLabel>
+                    <FormControl>
+                        <Input placeholder="VAT Registration No." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
               control={form.control}
-              name="name"
+              name="mobile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tenant Name</FormLabel>
+                  <FormLabel>Mobile Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Mama's Kitchen" {...field} />
+                    <Input placeholder="e.g., 5123 4567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter full address" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -3,9 +3,10 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order } from './types';
+import type { Product, OrderItem, Order, Tenant } from './types';
 
 interface AppState {
+  tenants: Tenant[];
   products: Product[];
   currentOrder: OrderItem[];
   completedOrders: Order[];
@@ -20,62 +21,78 @@ interface AppState {
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: string | null) => void;
   resetToTenantSelection: () => void;
-  addTenant: (name: string) => string;
+  addTenant: (tenantData: Omit<Tenant, 'id'>) => string;
   addProduct: (name: string, price: number, tenantId: string) => void;
   editProduct: (productId: string, data: { name: string; price: number }) => void;
   deleteProduct: (productId: string) => void;
+  getTenantById: (tenantId: string | null) => Tenant | undefined;
 }
 
-const initialProducts: Product[] = [
+const initialProducts: Omit<Product, 'tenantName'>[] = [
     // Mauritius Fried Chicken
-    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
-    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
-    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'T101', tenantName: 'Mauritius Fried Chicken' },
+    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'T101' },
+    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'T101' },
+    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'T101' },
 
     // Cannello Boulettes
-    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
-    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
-    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: 'T102', tenantName: 'Cannello Boulettes' },
+    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: 'T102' },
+    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: 'T102' },
+    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: 'T102' },
 
     // Nona Mada
-    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: 'T103', tenantName: 'Nona Mada' },
-    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: 'T103', tenantName: 'Nona Mada' },
-    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: 'T103', tenantName: 'Nona Mada' },
-    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: 'T103', tenantName: 'Nona Mada' },
+    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: 'T103' },
+    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: 'T103' },
+    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: 'T103' },
+    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: 'T103' },
     
     // Cuisines Réunionnaises
-    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
-    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
-    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
-    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: 'T104', tenantName: 'Cuisines Réunionnaises' },
+    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: 'T104' },
+    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: 'T104' },
+    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: 'T104' },
+    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: 'T104' },
 
     // La Renn SettKari
-    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
-    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
-    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
-    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: 'T105', tenantName: 'La Renn SettKari' },
+    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: 'T105' },
+    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: 'T105' },
+    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: 'T105' },
+    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: 'T105' },
     
     // Arabian Delights
-    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
-    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
-    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: 'T106', tenantName: 'Arabian Delights' },
+    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: 'T106' },
+    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: 'T106' },
+    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: 'T106' },
 
     // Gadjak Soular
-    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: 'T107', tenantName: 'Gadjak Soular' },
+    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: 'T107' },
+];
+
+const initialTenants: Tenant[] = [
+    { id: 'T101', name: 'Mauritius Fried Chicken', responsibleParty: 'Mr. Sanders' },
+    { id: 'T102', name: 'Cannello Boulettes', responsibleParty: 'Mrs. Cannello' },
+    { id: 'T103', name: 'Nona Mada', responsibleParty: 'Nona' },
+    { id: 'T104', name: 'Cuisines Réunionnaises', responsibleParty: 'Chef Laurent' },
+    { id: 'T105', name: 'La Renn SettKari', responsibleParty: 'La Renn' },
+    { id: 'T106', name: 'Arabian Delights', responsibleParty: 'Mr. Ali' },
+    { id: 'T107', name: 'Gadjak Soular', responsibleParty: 'Mme. Soular' },
 ];
 
 
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      tenants: initialTenants,
       products: initialProducts,
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
       selectedTenantId: null,
 
+      getTenantById: (tenantId: string | null) => {
+        if (!tenantId) return undefined;
+        return get().tenants.find(t => t.id === tenantId);
+      },
+
       setSelectedTenantId: (tenantId: string | null) => {
-        // When changing tenants, clear the current order.
         if (get().selectedTenantId !== tenantId) {
           set({ currentOrder: [] });
         }
@@ -178,43 +195,34 @@ export const useStore = create<AppState>()(
         }))
       },
 
-      addTenant: (name: string) => {
-        const { products } = get();
-        // Find all unique tenant names to prevent duplicates
-        const tenantNames = Array.from(new Set(products.map(p => p.tenantName)));
-        if (tenantNames.includes(name)) {
-          // In a real app, you might want to return an error here
-          console.error(`Tenant with name "${name}" already exists.`);
-          const existingTenant = products.find(p => p.tenantName === name);
-          return existingTenant?.tenantId || '';
+      addTenant: (tenantData) => {
+        const { tenants } = get();
+        const tenantNames = tenants.map(t => t.name);
+        if (tenantNames.includes(tenantData.name)) {
+          console.error(`Tenant with name "${tenantData.name}" already exists.`);
+          const existingTenant = tenants.find(t => t.name === tenantData.name);
+          return existingTenant?.id || '';
         }
 
-        const tenantIds = products.map(p => parseInt(p.tenantId.substring(1), 10));
+        const tenantIds = tenants.map(p => parseInt(p.id.substring(1), 10));
         const maxId = Math.max(0, ...tenantIds);
         const newTenantId = `T${maxId + 1}`;
         
-        // Add the new tenant by adding a placeholder "tenant existence" entry.
-        // We'll add an empty product list entry so the tenant shows up in the grid.
-        // This is a bit of a workaround because tenants are derived from products.
-        // A better data model would have separate lists for tenants and products.
-        const newTenantEntry: Product = {
-          id: `tenant-ref-${newTenantId}`,
-          name: '',
-          price: 0,
-          tenantId: newTenantId,
-          tenantName: name,
+        const newTenant: Tenant = {
+          id: newTenantId,
+          ...tenantData,
         };
         
         set(state => ({
-          products: [...state.products, newTenantEntry]
+          tenants: [...state.tenants, newTenant]
         }));
         
         return newTenantId;
       },
 
       addProduct: (name: string, price: number, tenantId: string) => {
-        const { products } = get();
-        const tenant = products.find(p => p.tenantId === tenantId);
+        const { tenants } = get();
+        const tenant = tenants.find(t => t.id === tenantId);
 
         if (!tenant) {
           console.error(`Cannot add product. Tenant with ID ${tenantId} not found.`);
@@ -226,7 +234,6 @@ export const useStore = create<AppState>()(
           name,
           price,
           tenantId,
-          tenantName: tenant.tenantName,
         }
 
         set(state => ({
@@ -254,7 +261,8 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        products: state.products, // Persist new tenants and products
+        products: state.products,
+        tenants: state.tenants,
       }),
     }
   )

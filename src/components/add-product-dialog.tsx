@@ -36,7 +36,7 @@ const formSchema = z.object({
 interface AddProductDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  tenantId: string;
+  tenantId: string | null;
 }
 
 export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: AddProductDialogProps) {
@@ -52,6 +52,14 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!tenantId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No tenant selected.',
+      });
+      return;
+    }
     addProduct(values.name, values.price, tenantId);
     toast({
       title: 'Product Added',

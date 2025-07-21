@@ -3,7 +3,16 @@ export interface Product {
   name: string;
   price: number;
   tenantId: string;
-  tenantName: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  responsibleParty: string;
+  brn?: string;
+  vat?: string;
+  mobile?: string;
+  address?: string;
 }
 
 export interface OrderItem extends Product {

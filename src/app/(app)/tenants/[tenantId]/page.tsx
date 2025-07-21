@@ -17,7 +17,7 @@ export default function TenantPage() {
   const tenantId = params.tenantId as string;
   const { 
     setSelectedTenantId, 
-    products, 
+    getTenantById,
     lastCompletedOrder,
     resetToTenantSelection,
   } = useStore();
@@ -27,8 +27,8 @@ export default function TenantPage() {
     setSelectedTenantId(tenantId);
   }, [tenantId, setSelectedTenantId]);
 
-  const tenant = products.find(p => p.tenantId === tenantId);
-  const tenantName = tenant ? tenant.tenantName : 'Tenant';
+  const tenant = useStore((state) => state.getTenantById(tenantId));
+  const tenantName = tenant ? tenant.name : 'Tenant';
 
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {

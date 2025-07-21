@@ -39,16 +39,17 @@ export default function ManageProductsPage() {
   const params = useParams();
   const router = useRouter();
   const tenantId = params.tenantId as string;
-  const { products, deleteProduct } = useStore();
+  const { products, deleteProduct, getTenantById } = useStore();
+  const tenant = getTenantById(tenantId);
 
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
   const tenantProducts = products.filter(
-    (p) => p.tenantId === tenantId && p.name // Filter out placeholder tenant entries
+    (p) => p.tenantId === tenantId
   );
 
-  const tenantName = tenantProducts.length > 0 ? tenantProducts[0].tenantName : 'Tenant';
+  const tenantName = tenant ? tenant.name : 'Tenant';
 
   const handleDelete = () => {
     if (productToDelete) {
