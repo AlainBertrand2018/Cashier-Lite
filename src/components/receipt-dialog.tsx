@@ -38,8 +38,14 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   const ReceiptBody = ({ order }: { order: Order }) => (
     <>
       <div className="text-sm text-muted-foreground">
-        <p>Order ID: {order.id.split('-')[1]}</p>
-        <p>Date: {orderDate.toLocaleString()}</p>
+        <div className="flex justify-between">
+            <span>Order ID:</span>
+            <span className="font-mono">{order.id.split('-')[1]}</span>
+        </div>
+        <div className="flex justify-between">
+            <span>Date:</span>
+            <span>{orderDate.toLocaleString()}</span>
+        </div>
       </div>
       <Separator />
       <div className="space-y-2">
