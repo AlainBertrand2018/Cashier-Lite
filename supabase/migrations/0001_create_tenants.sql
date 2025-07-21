@@ -1,25 +1,15 @@
-
-create table tenants (
-  id uuid default gen_random_uuid() not null primary key,
-  name text not null,
-  "responsibleParty" text not null,
-  brn text,
-  vat text,
-  mobile text not null,
-  address text,
-  "createdAt" timestamp with time zone default timezone('utc'::text, now()) not null
+-- Create the tenants table
+CREATE TABLE tenants (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "createdAt" timestamptz DEFAULT now() NOT NULL,
+    name text NOT NULL,
+    "responsibleParty" text NOT NULL,
+    brn text,
+    vat text,
+    mobile text NOT NULL,
+    address text
 );
 
-alter table tenants enable row level security;
-
-create policy "Allow public read-only access" on tenants
-  for select using (true);
-
-create policy "Allow authorized users to insert" on tenants
-  for insert with check (true);
-
-create policy "Allow authorized users to update" on tenants
-  for update using (true);
-
-create policy "Allow authorized users to delete" on tenants
-  for delete using (true);
+-- Note: Row Level Security (RLS) is disabled by default.
+-- For production, you should enable RLS and define policies.
+-- Example: ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;

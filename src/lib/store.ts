@@ -30,42 +30,11 @@ interface AppState {
   getTenantById: (tenantId: string | null) => Tenant | undefined;
 }
 
-const initialProducts: Omit<Product, 'tenantName'>[] = [
+const initialProducts: Product[] = [
     // Mauritius Fried Chicken
-    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: '101' },
-    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: '101' },
-    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: '101' },
-
-    // Cannello Boulettes
-    { id: 'cb1', name: 'Boulette Homard (10)', price: 200.00, tenantId: '102' },
-    { id: 'cb2', name: 'Boulette Crabe (10)', price: 125.00, tenantId: '102' },
-    { id: 'cb3', name: 'Mixed Bowl (20)', price: 300.00, tenantId: '102' },
-
-    // Nona Mada
-    { id: 'nm1', name: 'Romazava', price: 200.00, tenantId: '103' },
-    { id: 'nm2', name: 'Ravitoto', price: 200.00, tenantId: '103' },
-    { id: 'nm3', name: 'Mofo Gasy (10)', price: 60.00, tenantId: '103' },
-    { id: 'nm4', name: 'Mofo Akondro (10)', price: 80.00, tenantId: '103' },
-    
-    // Cuisines Réunionnaises
-    { id: 'cr1', name: 'Rougail Saucisse', price: 200.00, tenantId: '104' },
-    { id: 'cr2', name: 'Cabri Massalé', price: 200.00, tenantId: '104' },
-    { id: 'cr3', name: 'Civet Zourite', price: 300.00, tenantId: '104' },
-    { id: 'cr4', name: 'Gratin Chouchou', price: 180.00, tenantId: '104' },
-
-    // La Renn SettKari
-    { id: 'rsk1', name: '7 Kari Veg', price: 200.00, tenantId: '105' },
-    { id: 'rsk2', name: '7 Kari Poul', price: 250.00, tenantId: '105' },
-    { id: 'rsk3', name: '7 Kari Anyio', price: 300.00, tenantId: '105' },
-    { id: 'rsk4', name: '7 Kari Pwason', price: 350.00, tenantId: '105' },
-    
-    // Arabian Delights
-    { id: 'ad1', name: 'Couscous Agneau', price: 200.00, tenantId: '106' },
-    { id: 'ad2', name: 'Kebab Poulet', price: 250.00, tenantId: '106' },
-    { id: 'ad3', name: 'Tagine Marocain', price: 300.00, tenantId: '106' },
-
-    // Gadjak Soular
-    { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: '107' },
+    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
+    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
+    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
 ];
 
 export const useStore = create<AppState>()(
@@ -79,6 +48,10 @@ export const useStore = create<AppState>()(
       selectedTenantId: null,
 
       fetchTenants: async () => {
+        if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchTenants.");
+          return;
+        }
         const { data, error } = await supabase.from('tenants').select();
         if (error) {
           console.error('Error fetching tenants:', error);
@@ -196,6 +169,10 @@ export const useStore = create<AppState>()(
       },
 
       addTenant: async (tenantData) => {
+        if (!supabase) {
+           console.error('Supabase not configured. Cannot add tenant.');
+           return null;
+        }
         const { data, error } = await supabase
           .from('tenants')
           .insert([tenantData])

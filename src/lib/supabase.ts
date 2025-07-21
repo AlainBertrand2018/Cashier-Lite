@@ -10,10 +10,12 @@ export type Database = {
     Tables: {
       tenants: {
         Row: Tenant;
-        Insert: Omit<Tenant, 'id'>;
-        Update: Partial<Tenant>;
+        Insert: Omit<Tenant, 'id' | 'createdAt'>;
+        Update: Partial<Omit<Tenant, 'id' | 'createdAt'>>;
       }
     }
+    Functions: {}
+    Enums: {}
   }
 }
 
@@ -21,7 +23,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL and/or Anon Key are not defined in .env')
+  // A console.error is more appropriate here than throwing an error,
+  // as the app can still function in a limited capacity without Supabase.
+  console.error('Supabase URL and/or Anon Key are not defined in .env. The app will run in offline-only mode.')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient<Database>(supabaseUrl, supabaseAnonKey) : null;

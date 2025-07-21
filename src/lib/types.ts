@@ -7,13 +7,13 @@ export interface Product {
 
 export interface Tenant {
   id: string;
+  createdAt: string;
   name: string;
   responsibleParty: string;
   brn?: string;
   vat?: string;
-  mobile?: string;
+  mobile: string;
   address?: string;
-  createdAt: string;
 }
 
 export interface OrderItem extends Product {
