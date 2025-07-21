@@ -55,6 +55,17 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
         ))}
       </div>
       <Separator />
+      <div className="space-y-2 text-muted-foreground">
+          <div className="flex justify-between">
+              <p>Subtotal</p>
+              <p className="font-mono">Rs {order.subtotal.toFixed(2)}</p>
+          </div>
+            <div className="flex justify-between">
+                <p>VAT (15%)</p>
+                <p className="font-mono">Rs {order.vat.toFixed(2)}</p>
+            </div>
+      </div>
+      <Separator />
       <div className="flex justify-between font-bold text-xl">
         <p>Total</p>
         <p className="font-mono">Rs {order.total.toFixed(2)}</p>

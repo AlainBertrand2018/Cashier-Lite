@@ -14,6 +14,8 @@ export interface Order {
   id: string;
   tenantId: string;
   items: OrderItem[];
+  subtotal: number;
+  vat: number;
   total: number;
   createdAt: number;
   synced: boolean;

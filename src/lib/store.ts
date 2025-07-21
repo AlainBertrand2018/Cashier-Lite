@@ -145,14 +145,19 @@ export const useStore = create<AppState>()(
         const { currentOrder, selectedTenantId } = get();
         if (currentOrder.length === 0 || !selectedTenantId) return;
 
-        const total = currentOrder.reduce(
+        const subtotal = currentOrder.reduce(
           (sum, item) => sum + item.price * item.quantity,
           0
         );
+        const vat = subtotal * 0.15;
+        const total = subtotal + vat;
+
         const newOrder: Order = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           tenantId: selectedTenantId,
           items: currentOrder,
+          subtotal,
+          vat,
           total,
           createdAt: Date.now(),
           synced: false,

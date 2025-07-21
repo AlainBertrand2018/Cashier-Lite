@@ -17,10 +17,12 @@ export default function OrderSummary() {
     completeOrder 
   } = useStore();
 
-  const total = currentOrder.reduce(
+  const subtotal = currentOrder.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+  const vat = subtotal * 0.15;
+  const total = subtotal + vat;
 
   const handlePlaceOrder = () => {
     if (currentOrder.length > 0) {
@@ -34,7 +36,7 @@ export default function OrderSummary() {
         <CardTitle>Current Order</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-450px)] pr-4">
+        <ScrollArea className="h-[calc(100vh-500px)] pr-4">
           {currentOrder.length === 0 ? (
             <p className="text-muted-foreground">Select products to start an order.</p>
           ) : (
@@ -67,6 +69,17 @@ export default function OrderSummary() {
             </div>
           )}
         </ScrollArea>
+        <Separator className="my-4" />
+        <div className="space-y-2 text-muted-foreground">
+            <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>Rs {subtotal.toFixed(2)}</span>
+            </div>
+             <div className="flex justify-between">
+                <span>VAT (15%)</span>
+                <span>Rs {vat.toFixed(2)}</span>
+            </div>
+        </div>
         <Separator className="my-4" />
         <div className="flex justify-between font-bold text-lg">
           <span>Total</span>
