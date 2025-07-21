@@ -11,8 +11,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Printer, RefreshCw } from 'lucide-react';
-import type { Order } from '@/lib/types';
+import type { Order, Tenant } from '@/lib/types';
 import { Logo } from './icons';
+import { useStore } from '@/lib/store';
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ interface ReceiptDialogProps {
 }
 
 export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDialogProps) {
+  const { getTenantById } = useStore();
+
   const handlePrint = () => {
     const printContents = document.getElementById('receipt-content')?.innerHTML;
     const originalContents = document.body.innerHTML;
@@ -34,8 +37,9 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
 
   if (!order) return null;
   const orderDate = new Date(order.createdAt);
+  const tenant = getTenantById(order.tenantId);
 
-  const ReceiptBody = ({ order }: { order: Order }) => (
+  const ReceiptBody = ({ order, tenant }: { order: Order, tenant: Tenant | undefined }) => (
     <>
       <div className="text-sm text-muted-foreground">
         <div className="flex justify-between">
@@ -46,6 +50,12 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
             <span>Date:</span>
             <span>{orderDate.toLocaleString()}</span>
         </div>
+        {tenant && (
+            <div className="flex justify-between">
+                <span>Tenant ID:</span>
+                <span className="font-mono">{tenant.id} ({tenant.name})</span>
+            </div>
+        )}
       </div>
       <Separator />
       <div className="space-y-2">
@@ -118,7 +128,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} />
+                  <ReceiptBody order={order} tenant={tenant} />
                   <p className="text-center text-xs text-muted-foreground pt-4">
                     Thank you for your patronage!
                   </p>
@@ -132,7 +142,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} />
+                  <ReceiptBody order={order} tenant={tenant} />
                   <p className="text-center text-xs text-muted-foreground pt-4">
                     Fully Paid at {orderDate.toLocaleString()}
                   </p>
