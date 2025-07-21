@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import ProductGrid from '@/components/product-grid';
 import OrderSummary from '@/components/order-summary';
@@ -20,15 +20,24 @@ export default function TenantPage() {
     getTenantById,
     lastCompletedOrder,
     resetToTenantSelection,
+    fetchTenants
   } = useStore();
+
+  const [tenantName, setTenantName] = useState('Tenant');
+  
+  const tenant = useStore((state) => state.getTenantById(tenantId));
 
   useEffect(() => {
     // Set the selected tenant in the store when the page loads
+    fetchTenants();
     setSelectedTenantId(tenantId);
-  }, [tenantId, setSelectedTenantId]);
+  }, [tenantId, setSelectedTenantId, fetchTenants]);
 
-  const tenant = useStore((state) => state.getTenantById(tenantId));
-  const tenantName = tenant ? tenant.name : 'Tenant';
+  useEffect(() => {
+    if (tenant) {
+      setTenantName(tenant.name);
+    }
+  }, [tenant]);
 
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {

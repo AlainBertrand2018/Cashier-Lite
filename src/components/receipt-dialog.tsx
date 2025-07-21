@@ -14,6 +14,7 @@ import { Printer, RefreshCw } from 'lucide-react';
 import type { Order, Tenant } from '@/lib/types';
 import { Logo } from './icons';
 import { useStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -22,7 +23,13 @@ interface ReceiptDialogProps {
 }
 
 export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDialogProps) {
-  const { getTenantById } = useStore();
+  const { getTenantById, fetchTenants } = useStore();
+
+  useEffect(() => {
+    if (order) {
+        fetchTenants();
+    }
+  }, [order, fetchTenants]);
 
   const handlePrint = () => {
     const printContents = document.getElementById('receipt-content')?.innerHTML;
@@ -53,7 +60,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
         {tenant && (
             <div className="flex justify-between">
                 <span>Tenant ID:</span>
-                <span className="font-mono">{tenant.id} ({tenant.name})</span>
+                <span className="font-mono">{tenant.id.substring(0,4).toUpperCase()} ({tenant.name})</span>
             </div>
         )}
       </div>

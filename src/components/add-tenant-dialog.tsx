@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -47,6 +48,7 @@ interface AddTenantDialogProps {
 export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) {
   const addTenant = useStore((state) => state.addTenant);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,14 +62,25 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newTenantId = addTenant(values);
-    toast({
-      title: 'Tenant Added',
-      description: `Tenant "${values.name}" with ID ${newTenantId} has been created.`,
-    });
-    form.reset();
-    onOpenChange(false);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    const newTenantId = await addTenant(values);
+    setIsSubmitting(false);
+
+    if (newTenantId) {
+      toast({
+        title: 'Tenant Added',
+        description: `Tenant "${values.name}" has been created.`,
+      });
+      form.reset();
+      onOpenChange(false);
+    } else {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to add tenant. Please check the console for details.',
+      });
+    }
   }
 
   return (
@@ -164,10 +177,12 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Save Tenant</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Tenant'}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

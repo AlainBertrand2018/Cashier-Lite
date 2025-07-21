@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -39,8 +39,21 @@ export default function ManageProductsPage() {
   const params = useParams();
   const router = useRouter();
   const tenantId = params.tenantId as string;
-  const { products, deleteProduct, getTenantById } = useStore();
+  const { products, deleteProduct, getTenantById, fetchTenants } = useStore();
+  
+  const [tenantName, setTenantName] = useState('Tenant');
+  
+  useEffect(() => {
+    fetchTenants(); // Ensure tenants are loaded
+  }, [fetchTenants]);
+  
   const tenant = getTenantById(tenantId);
+  
+  useEffect(() => {
+    if(tenant) {
+      setTenantName(tenant.name);
+    }
+  }, [tenant]);
 
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
@@ -48,8 +61,6 @@ export default function ManageProductsPage() {
   const tenantProducts = products.filter(
     (p) => p.tenantId === tenantId
   );
-
-  const tenantName = tenant ? tenant.name : 'Tenant';
 
   const handleDelete = () => {
     if (productToDelete) {

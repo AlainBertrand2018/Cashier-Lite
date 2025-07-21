@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Product, OrderItem, Order, Tenant } from './types';
+import { supabase } from './supabase';
 
 interface AppState {
   tenants: Tenant[];
@@ -12,6 +13,7 @@ interface AppState {
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
   selectedTenantId: string | null;
+  fetchTenants: () => Promise<void>;
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
@@ -21,7 +23,7 @@ interface AppState {
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: string | null) => void;
   resetToTenantSelection: () => void;
-  addTenant: (tenantData: Omit<Tenant, 'id'>) => string;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'createdAt'>) => Promise<string | null>;
   addProduct: (name: string, price: number, tenantId: string) => void;
   editProduct: (productId: string, data: { name: string; price: number }) => void;
   deleteProduct: (productId: string) => void;
@@ -66,26 +68,24 @@ const initialProducts: Omit<Product, 'tenantName'>[] = [
     { id: 'gs1', name: 'Pwason Fri ek so salad', price: 250.00, tenantId: '107' },
 ];
 
-const initialTenants: Tenant[] = [
-    { id: '101', name: 'Mauritius Fried Chicken', responsibleParty: 'Mr. Sanders', mobile: '51234567' },
-    { id: '102', name: 'Cannello Boulettes', responsibleParty: 'Mrs. Cannello', mobile: '52345678' },
-    { id: '103', name: 'Nona Mada', responsibleParty: 'Nona', mobile: '53456789' },
-    { id: '104', name: 'Cuisines Réunionnaises', responsibleParty: 'Chef Laurent', mobile: '54567890' },
-    { id: '105', name: 'La Renn SettKari', responsibleParty: 'La Renn', mobile: '55678901' },
-    { id: '106', name: 'Arabian Delights', responsibleParty: 'Mr. Ali', mobile: '56789012' },
-    { id: '107', name: 'Gadjak Soular', responsibleParty: 'Mme. Soular', mobile: '57890123' },
-];
-
-
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      tenants: initialTenants,
+      tenants: [],
       products: initialProducts,
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
       selectedTenantId: null,
+
+      fetchTenants: async () => {
+        const { data, error } = await supabase.from('tenants').select();
+        if (error) {
+          console.error('Error fetching tenants:', error);
+          return;
+        }
+        set({ tenants: data || [] });
+      },
 
       getTenantById: (tenantId: string | null) => {
         if (!tenantId) return undefined;
@@ -195,29 +195,22 @@ export const useStore = create<AppState>()(
         }))
       },
 
-      addTenant: (tenantData) => {
-        const { tenants } = get();
-        const tenantNames = tenants.map(t => t.name);
-        if (tenantNames.includes(tenantData.name)) {
-          console.error(`Tenant with name "${tenantData.name}" already exists.`);
-          const existingTenant = tenants.find(t => t.name === tenantData.name);
-          return existingTenant?.id || '';
-        }
+      addTenant: async (tenantData) => {
+        const { data, error } = await supabase
+          .from('tenants')
+          .insert([tenantData])
+          .select()
+          .single();
 
-        const tenantIds = tenants.map(p => parseInt(p.id.replace(/\D/g, ''), 10) || 0);
-        const maxId = Math.max(0, ...tenantIds);
-        const newTenantId = `${maxId + 1}`;
+        if (error) {
+          console.error('Error adding tenant:', error);
+          return null;
+        }
         
-        const newTenant: Tenant = {
-          id: newTenantId,
-          ...tenantData,
-        };
-        
-        set(state => ({
-          tenants: [...state.tenants, newTenant]
-        }));
-        
-        return newTenantId;
+        // Refresh local state after successful insert
+        await get().fetchTenants();
+
+        return data?.id || null;
       },
 
       addProduct: (name: string, price: number, tenantId: string) => {
@@ -259,10 +252,11 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
+      // We only persist data that is not fetched from the DB
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         products: state.products,
-        tenants: state.tenants,
+        // tenants are now fetched from supabase
       }),
     }
   )

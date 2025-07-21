@@ -13,6 +13,7 @@ export interface Tenant {
   vat?: string;
   mobile?: string;
   address?: string;
+  createdAt: string;
 }
 
 export interface OrderItem extends Product {

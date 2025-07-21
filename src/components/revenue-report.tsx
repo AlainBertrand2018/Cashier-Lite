@@ -9,6 +9,7 @@ import { DollarSign, Hash, CheckCircle, Clock, Printer, Users } from 'lucide-rea
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import type { Tenant } from '@/lib/types';
+import { useEffect } from 'react';
 
 interface TenantReport {
   id: string;
@@ -20,7 +21,11 @@ interface TenantReport {
 }
 
 export default function RevenueReport() {
-  const { completedOrders, tenants } = useStore();
+  const { completedOrders, tenants, fetchTenants } = useStore();
+
+  useEffect(() => {
+    fetchTenants();
+  }, [fetchTenants]);
 
   const grossRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
   const totalOrders = completedOrders.length;
@@ -120,7 +125,7 @@ export default function RevenueReport() {
                     <TableRow key={report.id}>
                       <TableCell>
                         <div className="font-medium">{report.name}</div>
-                        <div className="text-xs text-muted-foreground">ID: {report.id}</div>
+                        <div className="text-xs text-muted-foreground">ID: {report.id.substring(0,4).toUpperCase()}</div>
                       </TableCell>
                       <TableCell className="text-center">{report.orderCount}</TableCell>
                       <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>
