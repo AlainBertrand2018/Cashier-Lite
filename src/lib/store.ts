@@ -20,6 +20,7 @@ interface AppState {
   setSelectedTenantId: (tenantId: string | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (name: string) => string;
+  addProduct: (name: string, price: number, tenantId: string) => void;
 }
 
 const initialProducts: Product[] = [
@@ -167,23 +168,58 @@ export const useStore = create<AppState>()(
 
       addTenant: (name: string) => {
         const { products } = get();
+        // Find all unique tenant names to prevent duplicates
+        const tenantNames = Array.from(new Set(products.map(p => p.tenantName)));
+        if (tenantNames.includes(name)) {
+          // In a real app, you might want to return an error here
+          console.error(`Tenant with name "${name}" already exists.`);
+          const existingTenant = products.find(p => p.tenantName === name);
+          return existingTenant?.tenantId || '';
+        }
+
         const tenantIds = products.map(p => parseInt(p.tenantId.substring(1), 10));
         const maxId = Math.max(0, ...tenantIds);
         const newTenantId = `T${maxId + 1}`;
         
-        const newProduct: Product = {
-          id: `prod-${Date.now()}`,
-          name: 'New Item', // Placeholder product
+        // Add the new tenant by adding a placeholder "tenant existence" entry.
+        // We'll add an empty product list entry so the tenant shows up in the grid.
+        // This is a bit of a workaround because tenants are derived from products.
+        // A better data model would have separate lists for tenants and products.
+        const newTenantEntry: Product = {
+          id: `tenant-ref-${newTenantId}`,
+          name: '',
           price: 0,
           tenantId: newTenantId,
           tenantName: name,
         };
+        
+        set(state => ({
+          products: [...state.products, newTenantEntry]
+        }));
+        
+        return newTenantId;
+      },
+
+      addProduct: (name: string, price: number, tenantId: string) => {
+        const { products } = get();
+        const tenant = products.find(p => p.tenantId === tenantId);
+
+        if (!tenant) {
+          console.error(`Cannot add product. Tenant with ID ${tenantId} not found.`);
+          return;
+        }
+
+        const newProduct: Product = {
+          id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          name,
+          price,
+          tenantId,
+          tenantName: tenant.tenantName,
+        }
 
         set(state => ({
           products: [...state.products, newProduct]
         }));
-        
-        return newTenantId;
       }
 
     }),
@@ -192,7 +228,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        products: state.products, // Persist new tenants
+        products: state.products, // Persist new tenants and products
       }),
     }
   )

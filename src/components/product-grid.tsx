@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import type { Product } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlusCircle } from 'lucide-react';
+import AddProductDialog from './add-product-dialog';
 
 function ProductCard({ product }: { product: Product }) {
   const addProductToOrder = useStore((state) => state.addProductToOrder);
@@ -22,16 +25,35 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function ProductGrid() {
   const { products, selectedTenantId } = useStore();
+  const [isAddProductOpen, setAddProductOpen] = useState(false);
+
+  if (!selectedTenantId) return null;
 
   const filteredProducts = products.filter(
     (product) => product.tenantId === selectedTenantId
   );
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {filteredProducts.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {filteredProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+        <Card
+          onClick={() => setAddProductOpen(true)}
+          className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary"
+        >
+          <CardHeader className="flex flex-col items-center justify-center text-center p-4 h-32">
+            <PlusCircle className="h-10 w-10 mb-2" />
+            <CardTitle className="text-lg font-semibold">Add Product</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+      <AddProductDialog 
+        isOpen={isAddProductOpen}
+        onOpenChange={setAddProductOpen}
+        tenantId={selectedTenantId}
+      />
+    </>
   );
 }

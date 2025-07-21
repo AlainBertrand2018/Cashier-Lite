@@ -10,6 +10,7 @@ export default function TenantSelectionGrid() {
   const { products, setSelectedTenantId } = useStore();
   const [isAddTenantOpen, setAddTenantOpen] = useState(false);
 
+  // Derive tenants from the product list, ensuring each tenant appears only once.
   const tenants = Array.from(
     new Map(products.map((p) => [p.tenantId, { id: p.tenantId, name: p.tenantName }])).values()
   ).sort((a, b) => a.name.localeCompare(b.name));
