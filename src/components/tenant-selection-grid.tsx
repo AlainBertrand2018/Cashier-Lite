@@ -2,6 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlusCircle } from 'lucide-react';
 
 export default function TenantSelectionGrid() {
   const { products, setSelectedTenantId } = useStore();
@@ -10,11 +11,16 @@ export default function TenantSelectionGrid() {
     new Map(products.map((p) => [p.tenantId, { id: p.tenantId, name: p.tenantName }])).values()
   ).sort((a, b) => a.name.localeCompare(b.name));
 
+  const handleAddTenant = () => {
+    // Placeholder for future implementation
+    alert('Functionality to add a new tenant is not yet implemented.');
+  };
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl text-center">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Select a Tenant</h1>
-        <p className="text-muted-foreground mb-8">Choose the tenant to start a new order.</p>
+        <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {tenants.map((tenant) => (
             <Card
@@ -28,6 +34,15 @@ export default function TenantSelectionGrid() {
               </CardHeader>
             </Card>
           ))}
+          <Card
+            onClick={handleAddTenant}
+            className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary"
+          >
+            <CardHeader className="flex flex-col items-center justify-center text-center p-4 h-32">
+              <PlusCircle className="h-10 w-10 mb-2" />
+              <CardTitle className="text-lg font-semibold">Add Tenant</CardTitle>
+            </CardHeader>
+          </Card>
         </div>
       </div>
     </div>
