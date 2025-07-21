@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,7 +35,7 @@ const formSchema = z.object({
   }),
   brn: z.string().optional(),
   vat: z.string().optional(),
-  mobile: z.string().optional(),
+  mobile: z.string().min(1, { message: 'Mobile number is required.' }),
   address: z.string().optional(),
 });
 
@@ -141,7 +142,7 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
               name="mobile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mobile Number</FormLabel>
+                  <FormLabel>Mobile Number *</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 5123 4567" {...field} />
                   </FormControl>
