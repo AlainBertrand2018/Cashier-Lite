@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -21,6 +22,8 @@ interface AppState {
   resetToTenantSelection: () => void;
   addTenant: (name: string) => string;
   addProduct: (name: string, price: number, tenantId: string) => void;
+  editProduct: (productId: string, data: { name: string; price: number }) => void;
+  deleteProduct: (productId: string) => void;
 }
 
 const initialProducts: Product[] = [
@@ -223,6 +226,20 @@ export const useStore = create<AppState>()(
 
         set(state => ({
           products: [...state.products, newProduct]
+        }));
+      },
+
+      editProduct: (productId, data) => {
+        set(state => ({
+          products: state.products.map(p => 
+            p.id === productId ? { ...p, ...data } : p
+          )
+        }));
+      },
+
+      deleteProduct: (productId) => {
+        set(state => ({
+          products: state.products.filter(p => p.id !== productId)
         }));
       }
 
