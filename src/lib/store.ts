@@ -204,7 +204,7 @@ export const useStore = create<AppState>()(
           return existingTenant?.id || '';
         }
 
-        const tenantIds = tenants.map(p => parseInt(p.id, 10));
+        const tenantIds = tenants.map(p => parseInt(p.id.replace(/\D/g, ''), 10) || 0);
         const maxId = Math.max(0, ...tenantIds);
         const newTenantId = `${maxId + 1}`;
         
