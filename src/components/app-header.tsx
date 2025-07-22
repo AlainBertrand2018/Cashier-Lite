@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,19 +15,40 @@ import { useState, useEffect } from 'react';
 
 function HeaderNavigation() {
   const [isClient, setIsClient] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const pathname = usePathname();
   const unsyncedCount = useStore(state => state.completedOrders.filter(o => !o.synced).length);
+  const syncOrders = useStore(state => state.syncOrders);
   const { toast } = useToast();
 
-  const handleSync = () => {
+  const handleSync = async () => {
+    setIsSyncing(true);
     toast({
       title: 'Syncing...',
-      description: `Attempting to sync ${unsyncedCount} orders. (Sync logic not yet implemented)`,
+      description: `Attempting to sync ${unsyncedCount} orders.`,
     });
+    
+    const { success, syncedCount, error } = await syncOrders();
+
+    setIsSyncing(false);
+    
+    if (success) {
+      toast({
+        title: 'Sync Complete',
+        description: `${syncedCount} orders were successfully synced.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Sync Failed',
+        description: `Could not sync orders. Please check console for details.`,
+      });
+       console.error("Sync error details:", error);
+    }
   };
   
   const navLinks = [
@@ -77,10 +99,10 @@ function HeaderNavigation() {
         </nav>
       </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Sync Data
-          {unsyncedCount > 0 && (
+        <Button variant="outline" size="sm" onClick={handleSync} disabled={unsyncedCount === 0 || isSyncing}>
+          <RefreshCw className={cn('mr-2 h-4 w-4', isSyncing && 'animate-spin')} />
+          {isSyncing ? 'Syncing...' : 'Sync Data'}
+          {unsyncedCount > 0 && !isSyncing && (
             <Badge variant="secondary" className="ml-2">
               {unsyncedCount}
             </Badge>
@@ -103,3 +125,5 @@ export default function AppHeader() {
     </header>
   );
 }
+
+    

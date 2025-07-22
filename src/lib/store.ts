@@ -29,6 +29,7 @@ interface AppState {
   editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
+  syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
 }
 
 export const useStore = create<AppState>()(
@@ -249,7 +250,7 @@ export const useStore = create<AppState>()(
             details: error.details,
             code: error.code,
             statusText,
-          });
+          }, 'Object sent:', productToInsert);
           return null;
         }
         
@@ -267,7 +268,7 @@ export const useStore = create<AppState>()(
         }
 
         const productToUpdate = {
-            ...productData,
+            name: productData.name,
             price: Number(productData.price),
         };
 
@@ -309,6 +310,59 @@ export const useStore = create<AppState>()(
             return;
         }
         await get().fetchProducts(productToDelete.tenant_id);
+      },
+      
+      syncOrders: async () => {
+        if (!supabase) {
+          return { success: false, syncedCount: 0, error: new Error('Supabase not configured.') };
+        }
+
+        const { completedOrders } = get();
+        const unsyncedOrders = completedOrders.filter(o => !o.synced);
+
+        if (unsyncedOrders.length === 0) {
+          return { success: true, syncedCount: 0 };
+        }
+
+        const ordersToInsert = unsyncedOrders.map(o => ({
+          id: o.id,
+          tenant_id: o.tenantId,
+          subtotal: o.subtotal,
+          vat: o.vat,
+          total: o.total,
+          created_at: new Date(o.createdAt).toISOString(),
+          cashier_id: o.cashierId,
+        }));
+
+        const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert);
+
+        if (ordersError) {
+          console.error('Error syncing orders:', ordersError);
+          return { success: false, syncedCount: 0, error: ordersError };
+        }
+
+        const orderItemsToInsert = unsyncedOrders.flatMap(o => 
+          o.items.map(item => ({
+            order_id: o.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+          }))
+        );
+        
+        const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
+
+        if (itemsError) {
+           console.error('Error syncing order items:', itemsError);
+          // Note: In a real app, you might want to handle this more gracefully,
+          // maybe by rolling back the orders insert.
+          return { success: false, syncedCount: 0, error: itemsError };
+        }
+        
+        const syncedOrderIds = unsyncedOrders.map(o => o.id);
+        get().markOrdersAsSynced(syncedOrderIds);
+
+        return { success: true, syncedCount: unsyncedOrders.length };
       }
 
     }),
@@ -321,3 +375,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    
