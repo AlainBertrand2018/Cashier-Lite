@@ -3,7 +3,7 @@
 
 import type { Order, Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, DollarSign, Hash, Printer } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -137,6 +137,12 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                         </TableRow>
                       )}
                   </TableBody>
+                   <TableFooter>
+                    <TableRow className="bg-muted/80 hover:bg-muted/80 font-bold no-print-break">
+                        <TableCell colSpan={3} className="text-right">Grand Total</TableCell>
+                        <TableCell className="text-right font-mono">Rs {totalRevenue.toFixed(2)}</TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
             </CardContent>
         </Card>

@@ -9,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
@@ -41,6 +42,11 @@ export function AllTenantsReport() {
       };
     })
     .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+  const grandTotalRevenue = tenantReports.reduce((sum, r) => sum + r.totalRevenue, 0);
+  const grandTotalTenantShare = tenantReports.reduce((sum, r) => sum + r.tenantShare, 0);
+  const grandTotalOrganizerShare = tenantReports.reduce((sum, r) => sum + r.organizerShare, 0);
+
 
   return (
     <Card>
@@ -81,6 +87,14 @@ export function AllTenantsReport() {
                 </TableRow>
             )}
           </TableBody>
+           <TableFooter>
+            <TableRow className="bg-muted/80 font-bold hover:bg-muted/80">
+              <TableCell colSpan={3} className="text-right">Grand Totals</TableCell>
+              <TableCell className="text-right font-mono">Rs {grandTotalRevenue.toFixed(2)}</TableCell>
+              <TableCell className="text-right font-mono">Rs {grandTotalTenantShare.toFixed(2)}</TableCell>
+              <TableCell className="text-right font-mono">Rs {grandTotalOrganizerShare.toFixed(2)}</TableCell>
+            </TableRow>
+          </TableFooter>
         </Table>
       </CardContent>
     </Card>
