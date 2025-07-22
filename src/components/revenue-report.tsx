@@ -212,7 +212,7 @@ export default function RevenueReport() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="print-instance">
+              <div className="print-instance hidden">
                  <div className="text-center mb-4 hidden print:block">
                   <h2 className="text-xl font-bold">Revenue Sharing: Copy 2</h2>
                   <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleString()}</p>
@@ -233,6 +233,13 @@ export default function RevenueReport() {
                         <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
+                     {tenantReports.length === 0 && (
+                      <TableRow>
+                          <TableCell colSpan={3} className="h-24 text-center">
+                              No revenue data available.
+                          </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
