@@ -146,7 +146,7 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                         <TableCell colSpan={3} className="text-right">Grand Total</TableCell>
                         <TableCell className="text-right font-mono">
                            <div>Rs {totalRevenue.toFixed(2)}</div>
-                           <div className="text-xs font-normal text-muted-foreground">(Total VAT: Rs {totalVat.toFixed(2)})</div>
+                           <div className="text-xs font-normal text-muted-foreground">(VAT PAYABLE: Rs {totalVat.toFixed(2)})</div>
                         </TableCell>
                     </TableRow>
                   </TableFooter>

@@ -93,7 +93,7 @@ export function AllTenantsReport() {
               <TableCell colSpan={3} className="text-right font-bold">Grand Totals</TableCell>
               <TableCell className="text-right font-mono">
                 <div>Rs {grandTotalRevenue.toFixed(2)}</div>
-                <div className="text-xs font-normal text-muted-foreground">(VAT: Rs {grandTotalVat.toFixed(2)})</div>
+                <div className="text-xs font-normal text-muted-foreground">(VAT PAYABLE: Rs {grandTotalVat.toFixed(2)})</div>
               </TableCell>
               <TableCell className="text-right font-mono">Rs {grandTotalTenantShare.toFixed(2)}</TableCell>
               <TableCell className="text-right font-mono">Rs {grandTotalOrganizerShare.toFixed(2)}</TableCell>
