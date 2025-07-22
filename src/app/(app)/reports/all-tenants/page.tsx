@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft, FileDown } from 'lucide-react';
 import { AllTenantsReport } from '@/components/all-tenants-report';
 import { useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function AllTenantsReportPage() {
   const reportRef = useRef<HTMLDivElement>(null);
@@ -13,11 +15,9 @@ export default function AllTenantsReportPage() {
   const handleDownloadPdf = () => {
     const input = reportRef.current;
     if (input) {
-      const { jsPDF } = require('jspdf');
-      const html2canvas = require('html2canvas');
-
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
 
       // Header
@@ -39,7 +39,6 @@ export default function AllTenantsReportPage() {
       pdf.text(`Date & Time: ${new Date().toLocaleString()}`, margin, currentY);
       currentY += 10;
       
-
       html2canvas(input, { scale: 2 }).then((canvas: any) => {
         const imgData = canvas.toDataURL('image/png');
         const canvasWidth = canvas.width;
@@ -48,6 +47,12 @@ export default function AllTenantsReportPage() {
         
         let imgWidth = pdfWidth - margin * 2;
         let imgHeight = imgWidth / ratio;
+        
+        const remainingPageHeight = pdfHeight - currentY - (margin + 15);
+        if (imgHeight > remainingPageHeight) {
+          imgHeight = remainingPageHeight;
+          imgWidth = imgHeight * ratio;
+        }
 
         pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight);
 

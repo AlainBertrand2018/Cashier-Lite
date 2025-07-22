@@ -45,18 +45,54 @@ export default function ReportsPage() {
   const handleDownloadPdf = () => {
     const input = reportRef.current;
     if (input) {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+
+      // Header
+      pdf.setFontSize(14).setFont('helvetica', 'bold');
+      pdf.text('FESTIVAL INTERNATIONAL DES SAVEURS LTD', pdfWidth / 2, margin, { align: 'center' });
+      pdf.setFontSize(8).setFont('helvetica', 'normal');
+      pdf.text('BRN : C34567265 • VAT 3242567', pdfWidth / 2, margin + 5, { align: 'center' });
+      pdf.text('23, Dock 4, The Docks, Port Louis', pdfWidth / 2, margin + 9, { align: 'center' });
+
+      let currentY = margin + 20;
+
+      // Body Title
+      pdf.setFontSize(12).setFont('helvetica', 'bold');
+      pdf.text('END OF SHIFT REPORT', margin, currentY);
+      currentY += 8;
+
+      // Body Metadata
+      pdf.setFontSize(10).setFont('helvetica', 'normal');
+      pdf.text(`Date & Time: ${new Date().toLocaleString()}`, margin, currentY);
+      currentY += 10;
+      
       html2canvas(input, { scale: 2 }).then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
+        
+        let imgWidth = pdfWidth - margin * 2;
+        let imgHeight = imgWidth / ratio;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height > pdfHeight ? pdfHeight : height);
+        const remainingPageHeight = pdfHeight - currentY - (margin + 15);
+        if (imgHeight > remainingPageHeight) {
+          imgHeight = remainingPageHeight;
+          imgWidth = imgHeight * ratio;
+        }
+
+        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight);
+
+        // Footer
+        const footerY = pdf.internal.pageSize.getHeight() - margin;
+        pdf.setFontSize(8).setFont('helvetica', 'italic');
+        pdf.text('This is an official sales digitally generated report. No signature is required.', pdfWidth / 2, footerY - 5, { align: 'center' });
+        pdf.setFontSize(8).setFont('helvetica', 'bold');
+        pdf.text('© 2025 SIPAI ONLINE SYSTEMS • All rights reserved.', pdfWidth / 2, footerY, { align: 'center' });
+
         pdf.save(`Shift-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
       });
     }
