@@ -44,6 +44,7 @@ export function AllTenantsReport() {
     .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
   const grandTotalRevenue = tenantReports.reduce((sum, r) => sum + r.totalRevenue, 0);
+  const grandTotalVat = completedOrders.reduce((sum, o) => sum + o.vat, 0);
   const grandTotalTenantShare = tenantReports.reduce((sum, r) => sum + r.tenantShare, 0);
   const grandTotalOrganizerShare = tenantReports.reduce((sum, r) => sum + r.organizerShare, 0);
 
@@ -89,8 +90,11 @@ export function AllTenantsReport() {
           </TableBody>
            <TableFooter>
             <TableRow className="bg-muted/80 font-bold hover:bg-muted/80">
-              <TableCell colSpan={3} className="text-right">Grand Totals</TableCell>
-              <TableCell className="text-right font-mono">Rs {grandTotalRevenue.toFixed(2)}</TableCell>
+              <TableCell colSpan={3} className="text-right font-bold">Grand Totals</TableCell>
+              <TableCell className="text-right font-mono">
+                <div>Rs {grandTotalRevenue.toFixed(2)}</div>
+                <div className="text-xs font-normal text-muted-foreground">(VAT: Rs {grandTotalVat.toFixed(2)})</div>
+              </TableCell>
               <TableCell className="text-right font-mono">Rs {grandTotalTenantShare.toFixed(2)}</TableCell>
               <TableCell className="text-right font-mono">Rs {grandTotalOrganizerShare.toFixed(2)}</TableCell>
             </TableRow>

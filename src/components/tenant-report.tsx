@@ -18,6 +18,7 @@ interface TenantReportProps {
 
 export default function TenantReport({ tenant, orders }: TenantReportProps) {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalVat = orders.reduce((sum, order) => sum + order.vat, 0);
   const tenantShare = totalRevenue * 0.7;
   const organizerShare = totalRevenue * 0.3;
 
@@ -118,7 +119,10 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                                     </Badge>
                                 </TableCell>
                                 <TableCell></TableCell> 
-                                <TableCell className="text-right font-bold">Rs {order.total.toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-bold">
+                                    <div>Rs {order.total.toFixed(2)}</div>
+                                    <div className="text-xs font-normal text-muted-foreground">(VAT: Rs {order.vat.toFixed(2)})</div>
+                                </TableCell>
                             </TableRow>
                              {order.items.map((item) => (
                                 <TableRow key={item.id} className="text-sm">
@@ -140,7 +144,10 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                    <TableFooter>
                     <TableRow className="bg-muted/80 hover:bg-muted/80 font-bold no-print-break">
                         <TableCell colSpan={3} className="text-right">Grand Total</TableCell>
-                        <TableCell className="text-right font-mono">Rs {totalRevenue.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-mono">
+                           <div>Rs {totalRevenue.toFixed(2)}</div>
+                           <div className="text-xs font-normal text-muted-foreground">(Total VAT: Rs {totalVat.toFixed(2)})</div>
+                        </TableCell>
                     </TableRow>
                   </TableFooter>
                 </Table>
