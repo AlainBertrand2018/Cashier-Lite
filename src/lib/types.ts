@@ -6,8 +6,8 @@ export interface Product {
 }
 
 export interface Tenant {
-  id: number;
-  createdAt: string;
+  tenant_id: number;
+  created_at: string;
   name: string;
   responsibleParty: string;
   brn?: string;

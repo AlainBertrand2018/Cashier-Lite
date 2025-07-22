@@ -35,10 +35,10 @@ export default function RevenueReport() {
   const sortedOrders = [...completedOrders].sort((a, b) => b.createdAt - a.createdAt);
 
   const tenantReports = tenants.map(tenant => {
-    const ordersForTenant = completedOrders.filter(o => o.tenantId === tenant.id);
+    const ordersForTenant = completedOrders.filter(o => o.tenantId === tenant.tenant_id);
     const revenueForTenant = ordersForTenant.reduce((sum, o) => sum + o.total, 0);
     return {
-      id: tenant.id,
+      id: tenant.tenant_id,
       name: tenant.name,
       orderCount: ordersForTenant.length,
       totalRevenue: revenueForTenant,

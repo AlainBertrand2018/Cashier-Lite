@@ -12,10 +12,10 @@ import { Skeleton } from './ui/skeleton';
 
 function TenantCard({ tenant }: { tenant: Tenant }) {
   return (
-    <Link href={`/tenants/${tenant.id}`} passHref>
+    <Link href={`/tenants/${tenant.tenant_id}`} passHref>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
         <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
-          <div className="text-6xl font-bold tracking-tighter mb-2">{tenant.id}</div>
+          <div className="text-6xl font-bold tracking-tighter mb-2">{tenant.tenant_id}</div>
           <div className="font-semibold text-lg">{tenant.name}</div>
           {tenant.mobile && (
             <div className="text-muted-foreground">{tenant.mobile}</div>
@@ -67,7 +67,7 @@ export default function TenantSelectionGrid() {
           {isLoading ? <TenantGridSkeleton /> : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {sortedTenants.map((tenant: Tenant) => (
-                <TenantCard key={tenant.id} tenant={tenant} />
+                <TenantCard key={tenant.tenant_id} tenant={tenant} />
                 ))}
                 <Card
                 onClick={() => setAddTenantOpen(true)}

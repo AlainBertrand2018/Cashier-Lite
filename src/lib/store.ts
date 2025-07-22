@@ -23,7 +23,7 @@ interface AppState {
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'createdAt'>) => Promise<number | null>;
+  addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   addProduct: (name: string, price: number, tenantId: string) => void;
   editProduct: (productId: string, data: { name: string; price: number }) => void;
   deleteProduct: (productId: string) => void;
@@ -57,12 +57,24 @@ export const useStore = create<AppState>()(
           console.error('Error fetching tenants:', error);
           return;
         }
-        set({ tenants: data || [] });
+        
+        // Map Supabase response to Tenant type
+        const tenants = data.map(item => ({
+          tenant_id: item.tenant_id,
+          created_at: item.created_at,
+          name: item.name,
+          responsibleParty: item.responsibleParty,
+          brn: item.brn || undefined,
+          vat: item.vat || undefined,
+          mobile: item.mobile,
+          address: item.address || undefined,
+        }));
+        set({ tenants });
       },
 
       getTenantById: (tenantId: number | null) => {
         if (!tenantId) return undefined;
-        return get().tenants.find(t => t.id === tenantId);
+        return get().tenants.find(t => t.tenant_id === tenantId);
       },
 
       setSelectedTenantId: (tenantId: number | null) => {
@@ -187,12 +199,12 @@ export const useStore = create<AppState>()(
         // Refresh local state after successful insert
         await get().fetchTenants();
 
-        return data?.id || null;
+        return data?.tenant_id || null;
       },
 
       addProduct: (name: string, price: number, tenantId: string) => {
         const { tenants } = get();
-        const tenant = tenants.find(t => t.id.toString() === tenantId);
+        const tenant = tenants.find(t => t.tenant_id.toString() === tenantId);
 
         if (!tenant) {
           console.error(`Cannot add product. Tenant with ID ${tenantId} not found.`);

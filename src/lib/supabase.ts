@@ -9,9 +9,18 @@ export type Database = {
   public: {
     Tables: {
       tenants: {
-        Row: Tenant;
-        Insert: Omit<Tenant, 'id' | 'createdAt'>;
-        Update: Partial<Omit<Tenant, 'id' | 'createdAt'>>;
+        Row: {
+          tenant_id: number;
+          created_at: string;
+          name: string;
+          responsibleParty: string;
+          brn: string | null;
+          vat: string | null;
+          mobile: string;
+          address: string | null;
+        };
+        Insert: Omit<Tenant, 'tenant_id' | 'created_at'>;
+        Update: Partial<Omit<Tenant, 'tenant_id' | 'created_at'>>;
       }
     }
     Functions: {}

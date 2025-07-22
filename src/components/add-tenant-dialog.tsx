@@ -70,7 +70,7 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
     if (newTenantId) {
       toast({
         title: 'Tenant Added',
-        description: `Tenant "${values.name}" has been created.`,
+        description: `Tenant "${values.name}" has been created with ID ${newTenantId}.`,
       });
       form.reset();
       onOpenChange(false);
