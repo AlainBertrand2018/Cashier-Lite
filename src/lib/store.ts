@@ -14,9 +14,10 @@ interface AppState {
   lastCompletedOrder: Order | null;
   selectedTenantId: number | null;
   fetchTenants: (force?: boolean) => Promise<void>;
+  fetchProducts: (tenantId: number) => Promise<void>;
   addProductToOrder: (product: Product) => void;
-  removeProductFromOrder: (productId: string) => void;
-  updateProductQuantity: (productId: string, quantity: number) => void;
+  removeProductFromOrder: (productId: number) => void;
+  updateProductQuantity: (productId: number, quantity: number) => void;
   clearCurrentOrder: () => void;
   completeOrder: () => void;
   setLastCompletedOrder: (order: Order | null) => void;
@@ -24,24 +25,17 @@ interface AppState {
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
-  addProduct: (name: string, price: number, tenantId: string) => void;
-  editProduct: (productId: string, data: { name: string; price: number }) => void;
-  deleteProduct: (productId: string) => void;
+  addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
+  editProduct: (productId: number, data: { name: string; price: number }) => Promise<void>;
+  deleteProduct: (productId: number) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
 }
-
-const initialProducts: Product[] = [
-    // Mauritius Fried Chicken
-    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: '101' },
-    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: '101' },
-    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: '101' },
-];
 
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       tenants: [],
-      products: initialProducts,
+      products: [],
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
@@ -50,7 +44,7 @@ export const useStore = create<AppState>()(
       fetchTenants: async (force = false) => {
         const { tenants } = get();
         if (tenants.length > 0 && !force) {
-          return; // Avoid refetching if tenants are already loaded
+          return;
         }
 
         if (!supabase) {
@@ -63,7 +57,6 @@ export const useStore = create<AppState>()(
           return;
         }
         
-        // Map Supabase response to Tenant type
         const fetchedTenants = data.map(item => ({
           tenant_id: item.tenant_id,
           created_at: item.created_at,
@@ -77,6 +70,25 @@ export const useStore = create<AppState>()(
         set({ tenants: fetchedTenants });
       },
 
+      fetchProducts: async (tenantId: number) => {
+        if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchProducts.");
+          set({ products: [] });
+          return;
+        }
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('tenant_id', tenantId);
+
+        if (error) {
+          console.error(`Error fetching products for tenant ${tenantId}:`, error);
+          set({ products: [] });
+          return;
+        }
+        set({ products: data || [] });
+      },
+
       getTenantById: (tenantId: number | null) => {
         if (!tenantId) return undefined;
         return get().tenants.find(t => t.tenant_id === tenantId);
@@ -84,9 +96,12 @@ export const useStore = create<AppState>()(
 
       setSelectedTenantId: (tenantId: number | null) => {
         if (get().selectedTenantId !== tenantId) {
-          set({ currentOrder: [] });
+          set({ currentOrder: [], products: [] }); // Clear products when tenant changes
         }
         set({ selectedTenantId: tenantId });
+        if (tenantId) {
+            get().fetchProducts(tenantId);
+        }
       },
       
       resetToTenantSelection: () => {
@@ -94,15 +109,20 @@ export const useStore = create<AppState>()(
           currentOrder: [],
           selectedTenantId: null,
           lastCompletedOrder: null,
+          products: [],
         });
       },
 
       addProductToOrder: (product) => {
-        const { currentOrder } = get();
+        const { currentOrder, selectedTenantId } = get();
         
-        if (currentOrder.length > 0 && currentOrder[0].tenantId !== product.tenantId) {
+        if (currentOrder.length > 0 && currentOrder[0].tenant_id !== product.tenant_id) {
           console.error("Cannot add products from different tenants to the same order.");
           return;
+        }
+         if (selectedTenantId !== product.tenant_id) {
+            console.error("Product does not belong to the selected tenant.");
+            return;
         }
 
         const existingItem = currentOrder.find((item) => item.id === product.id);
@@ -201,45 +221,72 @@ export const useStore = create<AppState>()(
           return null;
         }
         
-        // Force a refresh of the local state after successful insert
         await get().fetchTenants(true);
 
         return data?.tenant_id || null;
       },
+      
+      addProduct: async (productData) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot add product.');
+          return null;
+        }
+        const { data, error } = await supabase
+          .from('products')
+          .insert(productData)
+          .select()
+          .single();
 
-      addProduct: (name: string, price: number, tenantId: string) => {
-        const { tenants } = get();
-        const tenant = tenants.find(t => t.tenant_id.toString() === tenantId);
+        if (error) {
+          console.error('Error adding product:', error);
+          return null;
+        }
+        
+        if(data) {
+           await get().fetchProducts(data.tenant_id);
+        }
 
-        if (!tenant) {
-          console.error(`Cannot add product. Tenant with ID ${tenantId} not found.`);
+        return data;
+      },
+
+      editProduct: async (productId, productData) => {
+         if (!supabase) {
+          console.error('Supabase not configured. Cannot edit product.');
           return;
         }
+        const { data, error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', productId)
+          .select()
+          .single();
+        
+        if(error) {
+            console.error('Error editing product:', error);
+            return;
+        }
+        
+        if (data) {
+           await get().fetchProducts(data.tenant_id);
+        }
+      },
 
-        const newProduct: Product = {
-          id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          name,
-          price,
-          tenantId,
+      deleteProduct: async (productId: number) => {
+        const { products } = get();
+        const productToDelete = products.find(p => p.id === productId);
+
+        if (!productToDelete || !supabase) {
+            console.error('Product not found or Supabase not configured.');
+            return;
         }
 
-        set(state => ({
-          products: [...state.products, newProduct]
-        }));
-      },
+        const { error } = await supabase.from('products').delete().eq('id', productId);
 
-      editProduct: (productId, data) => {
-        set(state => ({
-          products: state.products.map(p => 
-            p.id === productId ? { ...p, ...data } : p
-          )
-        }));
-      },
-
-      deleteProduct: (productId) => {
-        set(state => ({
-          products: state.products.filter(p => p.id !== productId)
-        }));
+        if (error) {
+            console.error('Error deleting product:', error);
+            return;
+        }
+        await get().fetchProducts(productToDelete.tenant_id);
       }
 
     }),
@@ -248,7 +295,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        products: state.products,
+        // products are now fetched from db, so we don't persist them.
       }),
     }
   )

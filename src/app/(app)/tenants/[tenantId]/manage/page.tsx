@@ -38,16 +38,26 @@ import type { Product } from '@/lib/types';
 export default function ManageProductsPage() {
   const params = useParams();
   const router = useRouter();
-  const tenantId = params.tenantId as string;
-  const { products, deleteProduct, getTenantById, fetchTenants } = useStore();
+  const tenantId = parseInt(params.tenantId as string, 10);
+  const { products, deleteProduct, getTenantById, fetchTenants, fetchProducts, setSelectedTenantId } = useStore();
   
   const [tenantName, setTenantName] = useState('Tenant');
-  
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    fetchTenants(); // Ensure tenants are loaded
-  }, [fetchTenants]);
+    async function loadData() {
+        setIsLoading(true);
+        await fetchTenants();
+        await fetchProducts(tenantId);
+        setSelectedTenantId(tenantId);
+        setIsLoading(false);
+    }
+    loadData();
+  }, [tenantId, fetchTenants, fetchProducts, setSelectedTenantId]);
   
-  const tenant = getTenantById(parseInt(tenantId, 10));
+  const tenant = getTenantById(tenantId);
   
   useEffect(() => {
     if(tenant) {
@@ -55,16 +65,13 @@ export default function ManageProductsPage() {
     }
   }, [tenant]);
 
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
-
   const tenantProducts = products.filter(
-    (p) => p.tenantId === tenantId
+    (p) => p.tenant_id === tenantId
   );
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (productToDelete) {
-      deleteProduct(productToDelete.id);
+      await deleteProduct(productToDelete.id);
       setProductToDelete(null);
     }
   };
@@ -100,7 +107,13 @@ export default function ManageProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tenantProducts.length > 0 ? (
+              {isLoading ? (
+                 <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    Loading products...
+                  </TableCell>
+                </TableRow>
+              ) : tenantProducts.length > 0 ? (
                 tenantProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>

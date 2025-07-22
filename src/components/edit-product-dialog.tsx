@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -45,6 +45,7 @@ interface EditProductDialogProps {
 export default function EditProductDialog({ isOpen, onOpenChange, product }: EditProductDialogProps) {
   const editProduct = useStore((state) => state.editProduct);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,7 +55,6 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
     },
   });
 
-  // This effect synchronizes the form with the product prop when it changes.
   useEffect(() => {
     form.reset({
         name: product.name,
@@ -62,8 +62,11 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
     });
   }, [product, form]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    editProduct(product.id, values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    await editProduct(product.id, values);
+    setIsSubmitting(false);
+
     toast({
       title: 'Product Updated',
       description: `Product "${values.name}" has been updated.`,
@@ -109,10 +112,12 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

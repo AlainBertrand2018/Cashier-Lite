@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -42,6 +43,7 @@ interface AddProductDialogProps {
 export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: AddProductDialogProps) {
   const addProduct = useStore((state) => state.addProduct);
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,7 +53,7 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!tenantId) {
       toast({
         variant: 'destructive',
@@ -60,13 +62,24 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
       });
       return;
     }
-    addProduct(values.name, values.price, tenantId.toString());
-    toast({
-      title: 'Product Added',
-      description: `Product "${values.name}" has been added.`,
-    });
-    form.reset();
-    onOpenChange(false);
+    setIsSubmitting(true);
+    const newProduct = await addProduct({ ...values, tenant_id: tenantId });
+    setIsSubmitting(false);
+
+    if (newProduct) {
+      toast({
+        title: 'Product Added',
+        description: `Product "${values.name}" has been added.`,
+      });
+      form.reset();
+      onOpenChange(false);
+    } else {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to add product. Please check console for details.',
+      });
+    }
   }
 
   return (
@@ -107,10 +120,12 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Save Product</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Product'}
+                </Button>
             </DialogFooter>
           </form>
         </Form>
