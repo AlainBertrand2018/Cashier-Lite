@@ -10,6 +10,9 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import type { Tenant } from '@/lib/types';
 import { useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 
 interface TenantReport {
   id: number;
@@ -22,6 +25,7 @@ interface TenantReport {
 
 export default function RevenueReport() {
   const { completedOrders, tenants, fetchTenants } = useStore();
+  const router = useRouter();
 
   useEffect(() => {
     fetchTenants();
@@ -108,7 +112,7 @@ export default function RevenueReport() {
         <Card>
           <CardHeader>
             <CardTitle>Sales by Tenant</CardTitle>
-            <CardDescription>A breakdown of sales for each tenant.</CardDescription>
+            <CardDescription>A breakdown of sales for each tenant. Click a tenant for a detailed report.</CardDescription>
           </CardHeader>
           <CardContent>
              <ScrollArea className="h-[300px]">
@@ -121,8 +125,8 @@ export default function RevenueReport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenantReports.map(report => (
-                    <TableRow key={report.id}>
+                  {tenantReports.filter(r => r.orderCount > 0).map(report => (
+                     <TableRow key={report.id} onClick={() => router.push(`/reports/${report.id}`)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{report.name}</div>
                         <div className="text-xs text-muted-foreground">ID: {report.id}</div>
@@ -131,7 +135,7 @@ export default function RevenueReport() {
                       <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
-                   {tenantReports.length === 0 && (
+                   {tenantReports.filter(r => r.orderCount > 0).length === 0 && (
                     <TableRow>
                         <TableCell colSpan={3} className="h-24 text-center">
                             No sales data available.
@@ -156,7 +160,7 @@ export default function RevenueReport() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div id="revenue-sharing-content">
+            <div id="revenue-sharing-content" className="print-instance">
               <style>
               {`
                 @media print {
@@ -172,77 +176,41 @@ export default function RevenueReport() {
                     top: 0;
                     width: 100%;
                   }
-                  .print-instance {
-                    page-break-after: always;
-                  }
-                   .print-instance:last-child {
+                  .print-instance:last-child {
                     page-break-after: avoid;
                   }
                 }
               `}
               </style>
-              <div className="print-instance">
-                <div className="text-center mb-4 hidden print:block">
-                  <h2 className="text-xl font-bold">Revenue Sharing: Copy 1</h2>
-                  <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleString()}</p>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tenant</TableHead>
-                      <TableHead className="text-right">Tenant (70%)</TableHead>
-                      <TableHead className="text-right">Organizer (30%)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tenantReports.map(report => (
-                      <TableRow key={report.id}>
-                        <TableCell className="font-medium">{report.name}</TableCell>
-                        <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {tenantReports.length === 0 && (
-                      <TableRow>
-                          <TableCell colSpan={3} className="h-24 text-center">
-                              No revenue data available.
-                          </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+              <div className="text-center mb-4 hidden print:block">
+                <h2 className="text-xl font-bold">Overall Revenue Sharing</h2>
+                <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleString()}</p>
               </div>
-              <div className="print-instance hidden">
-                 <div className="text-center mb-4 hidden print:block">
-                  <h2 className="text-xl font-bold">Revenue Sharing: Copy 2</h2>
-                  <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleString()}</p>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tenant</TableHead>
-                      <TableHead className="text-right">Tenant (70%)</TableHead>
-                      <TableHead className="text-right">Organizer (30%)</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead className="text-right">Tenant (70%)</TableHead>
+                    <TableHead className="text-right">Organizer (30%)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tenantReports.filter(r => r.orderCount > 0).map(report => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">{report.name}</TableCell>
+                      <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tenantReports.map(report => (
-                      <TableRow key={report.id}>
-                        <TableCell className="font-medium">{report.name}</TableCell>
-                        <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                     {tenantReports.length === 0 && (
-                      <TableRow>
-                          <TableCell colSpan={3} className="h-24 text-center">
-                              No revenue data available.
-                          </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                  {tenantReports.filter(r => r.orderCount > 0).length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={3} className="h-24 text-center">
+                            No revenue data available.
+                        </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
