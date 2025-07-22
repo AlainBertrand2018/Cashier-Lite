@@ -3,18 +3,21 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
   tenants: Tenant[];
   products: Product[];
+  cashiers: Cashier[];
   currentOrder: OrderItem[];
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
   selectedTenantId: number | null;
+  selectedCashierId: string | null;
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
+  fetchCashiers: (force?: boolean) => Promise<void>;
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
@@ -23,6 +26,7 @@ interface AppState {
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
+  setSelectedCashierId: (cashierId: string | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   addProduct: (name: string, price: number, tenant_id: number) => Promise<Product | null>;
@@ -37,10 +41,12 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       tenants: [],
       products: [],
+      cashiers: [],
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
       selectedTenantId: null,
+      selectedCashierId: null,
 
       fetchTenants: async (force = false) => {
         if (!force && get().tenants.length > 0) {
@@ -89,6 +95,26 @@ export const useStore = create<AppState>()(
         set({ products: data || [] });
       },
 
+       fetchCashiers: async (force = false) => {
+        if (!force && get().cashiers.length > 0) {
+          return;
+        }
+         if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchCashiers.");
+          return;
+        }
+        const { data, error } = await supabase.from('cashiers').select();
+        if (error) {
+          console.error('Error fetching cashiers:', error);
+          return;
+        }
+        set({ cashiers: data || [] });
+        // Set a default cashier if one isn't selected
+        if (!get().selectedCashierId && data && data.length > 0) {
+          set({ selectedCashierId: data[0].id });
+        }
+      },
+
       getTenantById: (tenantId: number | null) => {
         if (!tenantId) return undefined;
         return get().tenants.find(t => t.tenant_id === tenantId);
@@ -96,12 +122,18 @@ export const useStore = create<AppState>()(
 
       setSelectedTenantId: (tenantId: number | null) => {
         if (get().selectedTenantId !== tenantId) {
-          set({ currentOrder: [], products: [] }); // Clear products when tenant changes
+          set({ currentOrder: [], products: [] }); 
         }
         set({ selectedTenantId: tenantId });
         if (tenantId) {
             get().fetchProducts(tenantId);
         }
+        // Also fetch cashiers when a tenant is selected
+        get().fetchCashiers();
+      },
+
+      setSelectedCashierId: (cashierId: string | null) => {
+        set({ selectedCashierId: cashierId });
       },
       
       resetToTenantSelection: () => {
@@ -169,7 +201,7 @@ export const useStore = create<AppState>()(
       },
       
       completeOrder: async () => {
-        const { currentOrder, selectedTenantId } = get();
+        const { currentOrder, selectedTenantId, selectedCashierId } = get();
         if (currentOrder.length === 0 || !selectedTenantId) return;
 
         const subtotal = currentOrder.reduce(
@@ -182,6 +214,7 @@ export const useStore = create<AppState>()(
         const newOrder: Omit<Order, 'synced'> = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           tenantId: selectedTenantId,
+          cashierId: selectedCashierId || undefined,
           items: currentOrder,
           subtotal,
           vat,
@@ -198,7 +231,7 @@ export const useStore = create<AppState>()(
                 vat: newOrder.vat,
                 total: newOrder.total,
                 created_at: new Date(newOrder.createdAt).toISOString(),
-                cashier_id: null, // You can set this if you have cashier logic
+                cashier_id: newOrder.cashierId || null,
             };
             const { error: orderError } = await supabase.from('orders').insert(orderToInsert);
 
@@ -214,7 +247,6 @@ export const useStore = create<AppState>()(
                     isSynced = true;
                 } else {
                     console.error("Error saving order items, will sync later:", itemsError);
-                    // In a real app, you might want to delete the order record if items fail
                 }
             } else {
                  console.error("Error saving order, will sync later:", orderError);
@@ -274,19 +306,14 @@ export const useStore = create<AppState>()(
             tenant_id,
         };
 
-        const { data, error, statusText } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .insert(productToInsert)
           .select()
           .single();
 
         if (error) {
-          console.error('Error adding product:', {
-            message: error.message,
-            details: error.details,
-            code: error.code,
-            statusText,
-          }, 'Object sent:', productToInsert);
+          console.error('Error adding product:', error, 'Object sent:', productToInsert);
           return null;
         }
         
@@ -308,7 +335,7 @@ export const useStore = create<AppState>()(
             price: Number(productData.price),
         };
 
-        const { data, error, statusText } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .update(productToUpdate)
           .eq('id', productId)
@@ -316,12 +343,7 @@ export const useStore = create<AppState>()(
           .single();
         
         if(error) {
-            console.error('Error editing product:', {
-                message: error.message,
-                details: error.details,
-                code: error.code,
-                statusText,
-            });
+            console.error('Error editing product:', error);
             return;
         }
         
@@ -367,7 +389,7 @@ export const useStore = create<AppState>()(
           vat: o.vat,
           total: o.total,
           created_at: new Date(o.createdAt).toISOString(),
-          cashier_id: o.cashierId,
+          cashier_id: o.cashierId || null,
         }));
 
         const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert);
@@ -390,8 +412,6 @@ export const useStore = create<AppState>()(
 
         if (itemsError) {
            console.error('Error syncing order items:', itemsError);
-          // Note: In a real app, you might want to handle this more gracefully,
-          // maybe by rolling back the orders insert.
           return { success: false, syncedCount: 0, error: itemsError };
         }
         
@@ -407,9 +427,9 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
        partialize: (state) => ({ 
         completedOrders: state.completedOrders,
+        cashiers: state.cashiers,
+        selectedCashierId: state.selectedCashierId,
       }),
     }
   )
 );
-
-    

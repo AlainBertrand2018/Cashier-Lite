@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -15,6 +16,13 @@ export interface Tenant {
   vat?: string;
   mobile: string;
   address?: string;
+}
+
+export interface Cashier {
+    id: string;
+    created_at: string;
+    name: string;
+    pin?: string;
 }
 
 export interface OrderItem extends Product {

@@ -1,10 +1,11 @@
--- supabase/migrations/0003_create_cashiers.sql
+create table
+  public.cashiers (
+    id uuid not null default gen_random_uuid (),
+    created_at timestamp with time zone not null default now(),
+    name text not null,
+    pin text null,
+    constraint cashiers_pkey primary key (id)
+  ) tablespace pg_default;
 
-create table cashiers (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamptz default now() not null,
-  name text not null,
-  pin text
-);
-
-alter table cashiers enable row level security;
+-- Seed a default cashier for development
+insert into public.cashiers (name) values ('Default Cashier');
