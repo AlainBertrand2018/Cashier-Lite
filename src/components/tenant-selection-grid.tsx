@@ -66,8 +66,8 @@ export default function TenantSelectionGrid() {
           <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
           {isLoading ? <TenantGridSkeleton /> : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {sortedTenants.map((tenant: Tenant, index: number) => (
-                  <TenantCard key={`${tenant.tenant_id}-${index}`} tenant={tenant} />
+                {sortedTenants.map((tenant: Tenant) => (
+                  <TenantCard key={tenant.tenant_id} tenant={tenant} />
                 ))}
                 <Card
                 onClick={() => setAddTenantOpen(true)}
