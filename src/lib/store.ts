@@ -13,7 +13,7 @@ interface AppState {
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
   selectedTenantId: number | null;
-  fetchTenants: () => Promise<void>;
+  fetchTenants: (force?: boolean) => Promise<void>;
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
@@ -47,7 +47,12 @@ export const useStore = create<AppState>()(
       lastCompletedOrder: null,
       selectedTenantId: null,
 
-      fetchTenants: async () => {
+      fetchTenants: async (force = false) => {
+        const { tenants } = get();
+        if (tenants.length > 0 && !force) {
+          return; // Avoid refetching if tenants are already loaded
+        }
+
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchTenants.");
           return;
@@ -59,7 +64,7 @@ export const useStore = create<AppState>()(
         }
         
         // Map Supabase response to Tenant type
-        const tenants = data.map(item => ({
+        const fetchedTenants = data.map(item => ({
           tenant_id: item.tenant_id,
           created_at: item.created_at,
           name: item.name,
@@ -69,7 +74,7 @@ export const useStore = create<AppState>()(
           mobile: item.mobile,
           address: item.address || undefined,
         }));
-        set({ tenants });
+        set({ tenants: fetchedTenants });
       },
 
       getTenantById: (tenantId: number | null) => {
@@ -196,8 +201,8 @@ export const useStore = create<AppState>()(
           return null;
         }
         
-        // Refresh local state after successful insert
-        await get().fetchTenants();
+        // Force a refresh of the local state after successful insert
+        await get().fetchTenants(true);
 
         return data?.tenant_id || null;
       },
@@ -241,8 +246,6 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
-      // We only persist data that should be available offline.
-      // Tenants are now fetched from Supabase and should not be persisted.
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         products: state.products,
