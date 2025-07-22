@@ -24,24 +24,43 @@ export type Database = {
       },
       products: {
         Row: {
-            id: string;
+            id: string; // uuid
             name: string;
             price: number;
             tenant_id: number;
             created_at: string;
         };
-        Insert: Omit<Product, 'id' | 'created_at'>;
-        Update: Partial<Omit<Product, 'id' | 'created_at'>>;
+        Insert: {
+            name: string;
+            price: number;
+            tenant_id: number;
+        };
+        Update: Partial<{
+            name: string;
+            price: number;
+        }>;
+      },
+      cashiers: {
+        Row: {
+            id: string; // uuid
+            created_at: string;
+            name: string;
+            pin: string | null;
+        };
+        Insert: {
+            name: string;
+            pin?: string | null;
+        };
       },
       orders: {
         Row: {
-          id: string;
+          id: string; // text
           created_at: string;
           tenant_id: number;
           total: number;
           vat: number;
           subtotal: number;
-          cashier_id: string | null;
+          cashier_id: string | null; // uuid
         };
         Insert: {
           id: string;
