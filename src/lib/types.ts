@@ -1,4 +1,5 @@
 
+
 export interface Product {
   id: string;
   name: string;
@@ -38,5 +39,14 @@ export interface Order {
   total: number;
   createdAt: number;
   synced: boolean;
-  cashierId?: string;
+  cashierId: string;
+  stationId: string;
+}
+
+export interface ActiveShift {
+    stationId: string;
+    cashierId: string;
+    cashierName: string;
+    floatAmount: number;
+    startTime: string;
 }

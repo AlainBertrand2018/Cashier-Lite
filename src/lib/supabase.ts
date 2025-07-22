@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js'
 import type { Tenant, Product, Order } from './types';
 
@@ -57,7 +58,8 @@ export type Database = {
           total: number;
           vat: number;
           subtotal: number;
-          cashier_id: string | null; // uuid
+          cashier_id: string | null;
+          station_id: string | null;
         };
         Insert: {
           id: string;
@@ -67,6 +69,7 @@ export type Database = {
           vat: number;
           subtotal: number;
           cashier_id?: string | null;
+          station_id?: string | null;
         };
       },
       order_items: {
@@ -82,6 +85,44 @@ export type Database = {
           product_id: string;
           quantity: number;
           price: number;
+        };
+      },
+      reports: {
+        Row: {
+          id: string;
+          created_at: string;
+          report_type: string;
+          generated_by_cashier_id: string | null;
+          tenant_id: number | null;
+          report_data_json: any;
+          storage_path: string | null;
+        };
+      },
+      receipts: {
+        Row: {
+          id: string;
+          created_at: string;
+          order_id: string;
+          generated_by_cashier_id: string;
+          receipt_data_json: any;
+          storage_path: string | null;
+        };
+      },
+      cashing_stations: {
+        Row: {
+          id: string;
+          created_at: string;
+          name: string;
+          is_active: boolean;
+          current_cashier_id: string | null;
+          last_login_at: string | null;
+        };
+        Insert: {
+            id?: string;
+            name?: string;
+            is_active?: boolean;
+            current_cashier_id?: string | null;
+            last_login_at?: string | null;
         };
       }
     }

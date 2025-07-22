@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
@@ -14,11 +14,16 @@ interface AppState {
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
   selectedTenantId: number | null;
-  selectedCashierId: string | null;
   isReportingDone: boolean;
-  fetchTenants: () => Promise<void>;
+  activeShift: ActiveShift | null;
+
+  fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
+
+  startShift: (cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
+  logoutShift: () => void;
+
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
@@ -28,7 +33,6 @@ interface AppState {
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
-  setSelectedCashierId: (cashierId: string | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   addProduct: (name: string, price: number, tenant_id: number) => Promise<Product | null>;
@@ -49,10 +53,13 @@ export const useStore = create<AppState>()(
       completedOrders: [],
       lastCompletedOrder: null,
       selectedTenantId: null,
-      selectedCashierId: null,
       isReportingDone: false,
+      activeShift: null,
 
-      fetchTenants: async () => {
+      fetchTenants: async (force = false) => {
+        if (!force && get().tenants.length > 0) {
+          return;
+        }
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchTenants.");
           return;
@@ -109,10 +116,60 @@ export const useStore = create<AppState>()(
           return;
         }
         set({ cashiers: data || [] });
-        // Set a default cashier if one isn't selected
-        if (!get().selectedCashierId && data && data.length > 0) {
-          set({ selectedCashierId: data[0].id });
+      },
+      
+      startShift: async (cashierId: string, pin: string, floatAmount: number) => {
+        if (!supabase) {
+          console.error('Supabase not configured');
+          return false;
         }
+        const { data: cashier, error } = await supabase
+          .from('cashiers')
+          .select('id, name, pin')
+          .eq('id', cashierId)
+          .single();
+
+        if (error || !cashier) {
+          console.error('Cashier not found', error);
+          return false;
+        }
+
+        if (cashier.pin !== pin) {
+          console.error('Invalid PIN');
+          return false;
+        }
+        
+        const { data: station, error: stationError } = await supabase
+          .from('cashing_stations')
+          .insert({
+            current_cashier_id: cashier.id,
+            last_login_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (stationError || !station) {
+            console.error('Could not create cashing station session', stationError);
+            return false;
+        }
+        
+        set({ 
+            activeShift: {
+                stationId: station.id,
+                cashierId: cashier.id,
+                cashierName: cashier.name,
+                floatAmount: floatAmount,
+                startTime: new Date().toISOString(),
+            },
+            selectedTenantId: null,
+            currentOrder: [],
+         });
+        return true;
+      },
+      
+      logoutShift: () => {
+          // Here you could also update the cashing_station record to set cashier_id to null
+          set({ activeShift: null });
       },
 
       getTenantById: (tenantId: number | null) => {
@@ -128,13 +185,8 @@ export const useStore = create<AppState>()(
         if (tenantId) {
             get().fetchProducts(tenantId);
         }
-        // Also fetch cashiers when a tenant is selected
-        get().fetchCashiers();
       },
 
-      setSelectedCashierId: (cashierId: string | null) => {
-        set({ selectedCashierId: cashierId });
-      },
       
       resetToTenantSelection: () => {
         set({
@@ -197,6 +249,7 @@ export const useStore = create<AppState>()(
       },
 
       clearCompletedOrders: () => {
+        // This is now for clearing the *previous* shift's data.
         set({ completedOrders: [], isReportingDone: false });
       },
       
@@ -205,8 +258,8 @@ export const useStore = create<AppState>()(
       },
       
       completeOrder: async () => {
-        const { currentOrder, selectedTenantId, selectedCashierId } = get();
-        if (currentOrder.length === 0 || !selectedTenantId) return;
+        const { currentOrder, selectedTenantId, activeShift } = get();
+        if (currentOrder.length === 0 || !selectedTenantId || !activeShift) return;
 
         const subtotal = currentOrder.reduce(
           (sum, item) => sum + item.price * item.quantity,
@@ -218,7 +271,8 @@ export const useStore = create<AppState>()(
         const newOrder: Omit<Order, 'synced'> = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           tenantId: selectedTenantId,
-          cashierId: selectedCashierId || undefined,
+          cashierId: activeShift.cashierId,
+          stationId: activeShift.stationId,
           items: currentOrder,
           subtotal,
           vat,
@@ -235,7 +289,8 @@ export const useStore = create<AppState>()(
                 vat: newOrder.vat,
                 total: newOrder.total,
                 created_at: new Date(newOrder.createdAt).toISOString(),
-                cashier_id: newOrder.cashierId || null,
+                cashier_id: newOrder.cashierId,
+                station_id: newOrder.stationId,
             };
             const { error: orderError } = await supabase.from('orders').insert(orderToInsert);
 
@@ -379,7 +434,7 @@ export const useStore = create<AppState>()(
           return { success: false, syncedCount: 0, error: new Error('Supabase not configured.') };
         }
 
-        const { completedOrders, selectedCashierId } = get();
+        const { completedOrders, activeShift } = get();
         const unsyncedOrders = completedOrders.filter(o => !o.synced);
 
         if (unsyncedOrders.length === 0) {
@@ -393,7 +448,8 @@ export const useStore = create<AppState>()(
           vat: o.vat,
           total: o.total,
           created_at: new Date(o.createdAt).toISOString(),
-          cashier_id: o.cashierId || selectedCashierId || null,
+          cashier_id: o.cashierId || activeShift?.cashierId || null,
+          station_id: o.stationId || activeShift?.stationId || null,
         }));
 
         const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert);
@@ -436,7 +492,8 @@ export const useStore = create<AppState>()(
        partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         cashiers: state.cashiers,
-        selectedCashierId: state.selectedCashierId,
+        activeShift: state.activeShift,
+        isReportingDone: state.isReportingDone,
       }),
     }
   )

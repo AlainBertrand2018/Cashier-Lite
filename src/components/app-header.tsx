@@ -3,14 +3,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard } from 'lucide-react';
+import { BookOpen, LayoutDashboard, LogOut, UserCircle } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect } from 'react';
+import { useStore } from '@/lib/store';
+import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
 
 function HeaderNavigation() {
   const [isClient, setIsClient] = useState(false);
+  const { activeShift, logoutShift } = useStore();
+  const router = useRouter();
+  
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -21,6 +27,11 @@ function HeaderNavigation() {
     { href: '/dashboard', label: 'New Order', icon: LayoutDashboard },
     { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen },
   ];
+  
+  const handleLogout = () => {
+    logoutShift();
+    router.push('/');
+  }
 
   if (!isClient) {
     return null;
@@ -49,7 +60,15 @@ function HeaderNavigation() {
         </nav>
       </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
-        {/* Sync button removed as per user request */}
+        {activeShift && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <UserCircle className="h-5 w-5" />
+            <span>{activeShift.cashierName}</span>
+          </div>
+        )}
+         <Button variant="ghost" size="icon" onClick={handleLogout} title="End Shift & Logout">
+            <LogOut className="h-4 w-4" />
+         </Button>
       </div>
     </>
   );
@@ -67,5 +86,3 @@ export default function AppHeader() {
     </header>
   );
 }
-
-    
