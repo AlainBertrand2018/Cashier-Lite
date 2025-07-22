@@ -2,10 +2,10 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DollarSign, Hash, CheckCircle, Clock, Printer, Users, TrendingDown } from 'lucide-react';
+import { DollarSign, Hash, Clock, Printer, Users } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import type { Tenant } from '@/lib/types';
@@ -113,12 +113,12 @@ export default function RevenueReport() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 flex flex-col">
           <CardHeader>
             <CardTitle>Top Sales</CardTitle>
             <CardDescription>A breakdown of sales for each tenant, sorted by best performing.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow">
              <ScrollArea className="h-[300px]">
               <Table>
                 <TableHeader>
@@ -148,14 +148,19 @@ export default function RevenueReport() {
               </Table>
             </ScrollArea>
           </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full" variant="outline">
+              <Link href="/reports">View All</Link>
+            </Button>
+          </CardFooter>
         </Card>
         
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 flex flex-col">
           <CardHeader>
             <CardTitle>Worst Sales</CardTitle>
             <CardDescription>The 5 tenants with the lowest sales revenue for the shift.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow">
             <ScrollArea className="h-[300px]">
               <Table>
                 <TableHeader>
@@ -185,6 +190,11 @@ export default function RevenueReport() {
               </Table>
             </ScrollArea>
           </CardContent>
+           <CardFooter>
+            <Button asChild className="w-full" variant="outline">
+              <Link href="/reports">View All</Link>
+            </Button>
+          </CardFooter>
         </Card>
 
         <Card className="lg:col-span-1">
