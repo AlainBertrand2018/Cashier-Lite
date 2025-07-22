@@ -283,7 +283,7 @@ export const useStore = create<AppState>()(
 
         let isSynced = false;
         if (supabase) {
-            const orderToInsert = {
+            let orderToInsert: any = {
                 id: newOrder.id,
                 tenant_id: newOrder.tenantId,
                 subtotal: newOrder.subtotal,
@@ -293,7 +293,23 @@ export const useStore = create<AppState>()(
                 cashier_id: newOrder.cashierId,
                 station_id: newOrder.stationId,
             };
-            const { error: orderError } = await supabase.from('orders').insert(orderToInsert);
+            
+            let { error: orderError } = await supabase.from('orders').insert(orderToInsert);
+
+            if (orderError) {
+                // This is a resilience check. If the schema cache is stale and doesn't know about
+                // the new cashier_id or station_id columns, it will fail. We can retry without them.
+                const isSchemaCacheError = orderError.message.includes("does not exist") || orderError.message.includes("Could not find the");
+                
+                if (isSchemaCacheError) {
+                    console.warn("Schema cache might be stale. Retrying insert without station/cashier ID.", orderError.message);
+                    delete orderToInsert.cashier_id;
+                    delete orderToInsert.station_id;
+                    const retryResult = await supabase.from('orders').insert(orderToInsert);
+                    orderError = retryResult.error;
+                }
+            }
+            
 
             if (!orderError) {
                 const orderItemsToInsert = newOrder.items.map(item => ({
@@ -349,7 +365,7 @@ export const useStore = create<AppState>()(
           return null;
         }
         
-        await get().fetchTenants();
+        await get().fetchTenants(true);
 
         return data?.tenant_id || null;
       },
@@ -453,7 +469,7 @@ export const useStore = create<AppState>()(
           station_id: o.stationId || activeShift?.stationId || null,
         }));
 
-        const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert);
+        const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert, { onConflict: 'id' });
 
         if (ordersError) {
           console.error('Error syncing orders:', ordersError);
@@ -473,6 +489,7 @@ export const useStore = create<AppState>()(
 
         if (itemsError) {
            console.error('Error syncing order items:', itemsError);
+          // Don't mark as synced if items fail
           return { success: false, syncedCount: 0, error: itemsError };
         }
         
@@ -499,3 +516,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    
