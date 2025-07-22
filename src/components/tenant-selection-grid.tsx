@@ -11,13 +11,11 @@ import type { Tenant } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 
 function TenantCard({ tenant }: { tenant: Tenant }) {
-  // Supabase IDs are UUIDs by default, so we take the first 4 chars for display.
-  const displayId = tenant.id.substring(0, 4).toUpperCase();
   return (
     <Link href={`/tenants/${tenant.id}`} passHref>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
         <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
-          <div className="text-6xl font-bold tracking-tighter mb-2">{displayId}</div>
+          <div className="text-6xl font-bold tracking-tighter mb-2">{tenant.id}</div>
           <div className="font-semibold text-lg">{tenant.name}</div>
           {tenant.mobile && (
             <div className="text-muted-foreground">{tenant.mobile}</div>

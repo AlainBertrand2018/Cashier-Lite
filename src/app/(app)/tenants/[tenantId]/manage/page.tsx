@@ -47,7 +47,7 @@ export default function ManageProductsPage() {
     fetchTenants(); // Ensure tenants are loaded
   }, [fetchTenants]);
   
-  const tenant = getTenantById(tenantId);
+  const tenant = getTenantById(parseInt(tenantId, 10));
   
   useEffect(() => {
     if(tenant) {

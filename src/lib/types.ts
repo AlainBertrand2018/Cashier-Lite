@@ -6,7 +6,7 @@ export interface Product {
 }
 
 export interface Tenant {
-  id: string;
+  id: number;
   createdAt: string;
   name: string;
   responsibleParty: string;
@@ -22,7 +22,7 @@ export interface OrderItem extends Product {
 
 export interface Order {
   id: string;
-  tenantId: string;
+  tenantId: number;
   items: OrderItem[];
   subtotal: number;
   vat: number;

@@ -30,7 +30,7 @@ export default function ProductGrid() {
   if (!selectedTenantId) return null;
 
   const filteredProducts = products.filter(
-    (product) => product.tenantId === selectedTenantId
+    (product) => product.tenantId === selectedTenantId.toString()
   );
 
   return (

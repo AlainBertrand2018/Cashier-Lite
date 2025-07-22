@@ -12,7 +12,7 @@ interface AppState {
   currentOrder: OrderItem[];
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
-  selectedTenantId: string | null;
+  selectedTenantId: number | null;
   fetchTenants: () => Promise<void>;
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
@@ -21,20 +21,20 @@ interface AppState {
   completeOrder: () => void;
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
-  setSelectedTenantId: (tenantId: string | null) => void;
+  setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'createdAt'>) => Promise<string | null>;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'createdAt'>) => Promise<number | null>;
   addProduct: (name: string, price: number, tenantId: string) => void;
   editProduct: (productId: string, data: { name: string; price: number }) => void;
   deleteProduct: (productId: string) => void;
-  getTenantById: (tenantId: string | null) => Tenant | undefined;
+  getTenantById: (tenantId: number | null) => Tenant | undefined;
 }
 
 const initialProducts: Product[] = [
     // Mauritius Fried Chicken
-    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
-    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
-    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: 'a3d8a577-3844-4942-8386-77884784a320' },
+    { id: 'mfc1', name: 'Large Spicy', price: 90.00, tenantId: '101' },
+    { id: 'mfc2', name: 'Wings (5)', price: 80.00, tenantId: '101' },
+    { id: 'mfc3', name: 'Mixed Platter', price: 200.00, tenantId: '101' },
 ];
 
 export const useStore = create<AppState>()(
@@ -60,12 +60,12 @@ export const useStore = create<AppState>()(
         set({ tenants: data || [] });
       },
 
-      getTenantById: (tenantId: string | null) => {
+      getTenantById: (tenantId: number | null) => {
         if (!tenantId) return undefined;
         return get().tenants.find(t => t.id === tenantId);
       },
 
-      setSelectedTenantId: (tenantId: string | null) => {
+      setSelectedTenantId: (tenantId: number | null) => {
         if (get().selectedTenantId !== tenantId) {
           set({ currentOrder: [] });
         }
@@ -192,7 +192,7 @@ export const useStore = create<AppState>()(
 
       addProduct: (name: string, price: number, tenantId: string) => {
         const { tenants } = get();
-        const tenant = tenants.find(t => t.id === tenantId);
+        const tenant = tenants.find(t => t.id.toString() === tenantId);
 
         if (!tenant) {
           console.error(`Cannot add product. Tenant with ID ${tenantId} not found.`);

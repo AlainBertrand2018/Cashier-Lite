@@ -12,7 +12,7 @@ import type { Tenant } from '@/lib/types';
 import { useEffect } from 'react';
 
 interface TenantReport {
-  id: string;
+  id: number;
   name: string;
   orderCount: number;
   totalRevenue: number;
@@ -125,7 +125,7 @@ export default function RevenueReport() {
                     <TableRow key={report.id}>
                       <TableCell>
                         <div className="font-medium">{report.name}</div>
-                        <div className="text-xs text-muted-foreground">ID: {report.id.substring(0,4).toUpperCase()}</div>
+                        <div className="text-xs text-muted-foreground">ID: {report.id}</div>
                       </TableCell>
                       <TableCell className="text-center">{report.orderCount}</TableCell>
                       <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>

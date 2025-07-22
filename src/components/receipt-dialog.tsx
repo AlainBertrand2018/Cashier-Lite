@@ -60,7 +60,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
         {tenant && (
             <div className="flex justify-between">
                 <span>Tenant ID:</span>
-                <span className="font-mono">{tenant.id.substring(0,4).toUpperCase()} ({tenant.name})</span>
+                <span className="font-mono">{tenant.id} ({tenant.name})</span>
             </div>
         )}
       </div>

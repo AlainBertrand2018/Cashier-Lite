@@ -17,7 +17,6 @@ export default function TenantPage() {
   const tenantId = params.tenantId as string;
   const { 
     setSelectedTenantId, 
-    getTenantById,
     lastCompletedOrder,
     resetToTenantSelection,
     fetchTenants
@@ -25,12 +24,12 @@ export default function TenantPage() {
 
   const [tenantName, setTenantName] = useState('Tenant');
   
-  const tenant = useStore((state) => state.getTenantById(tenantId));
+  const tenant = useStore((state) => state.getTenantById(parseInt(tenantId, 10)));
 
   useEffect(() => {
     // Set the selected tenant in the store when the page loads
     fetchTenants();
-    setSelectedTenantId(tenantId);
+    setSelectedTenantId(parseInt(tenantId, 10));
   }, [tenantId, setSelectedTenantId, fetchTenants]);
 
   useEffect(() => {
