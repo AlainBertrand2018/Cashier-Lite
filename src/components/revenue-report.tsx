@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DollarSign, Hash, Clock, Printer, Users } from 'lucide-react';
+import { DollarSign, Hash, Clock, Printer, Users, FileDown } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import type { Tenant } from '@/lib/types';
@@ -63,6 +63,28 @@ export default function RevenueReport() {
       window.print();
       document.body.innerHTML = originalContents;
       window.location.reload(); 
+    }
+  };
+  
+  const handleDownloadRecentOrdersPdf = () => {
+    const printContents = document.getElementById('recent-orders-content');
+    if (printContents) {
+      const { jsPDF } = require('jspdf');
+      const html2canvas = require('html2canvas');
+      html2canvas(printContents, { scale: 2 }).then((canvas: any) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, width, height > pdfHeight ? pdfHeight : height);
+        pdf.save(`Recent-Orders-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
+      });
     }
   };
 
@@ -150,7 +172,7 @@ export default function RevenueReport() {
           </CardContent>
           <CardFooter>
             <Button asChild className="w-full" variant="outline">
-              <Link href="/reports">View All</Link>
+              <Link href="/reports/all-tenants">View All</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -192,7 +214,7 @@ export default function RevenueReport() {
           </CardContent>
            <CardFooter>
             <Button asChild className="w-full" variant="outline">
-              <Link href="/reports">View All</Link>
+              <Link href="/reports/all-tenants">View All</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -266,11 +288,17 @@ export default function RevenueReport() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-          <CardDescription>A log of all individual transactions for the shift.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>Recent Orders</CardTitle>
+                <CardDescription>A log of all individual transactions for the shift.</CardDescription>
+            </div>
+            <Button onClick={handleDownloadRecentOrdersPdf}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Download PDF
+            </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent id="recent-orders-content" className="p-4 bg-background">
           <ScrollArea className="h-[400px]">
             <Table>
               <TableHeader>
