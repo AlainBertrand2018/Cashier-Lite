@@ -28,41 +28,21 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
   const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="outline" size="icon">
-            <Link href="/reports">
-              <ArrowLeft />
-              <span className="sr-only">Back to Reports</span>
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Tenant Sales Report</h1>
-            <p className="text-muted-foreground">Detailed report for {tenant.name}</p>
-          </div>
-        </div>
-        <Button onClick={handlePrint}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print Report
-        </Button>
-      </div>
-
-      <div id="tenant-report-content" className="space-y-8">
-         <style>
-              {`
-                @media print {
-                  body {
-                    background-color: white;
-                  }
-                  .print\\:hidden {
-                    display: none;
-                  }
-                  .no-print-break {
-                     page-break-inside: avoid;
-                  }
+    <div id="tenant-report-content" className="space-y-8 p-4 bg-background">
+        <style>
+            {`
+            @media print {
+                body {
+                background-color: white;
                 }
-              `}
+                .print\\:hidden {
+                display: none;
+                }
+                .no-print-break {
+                    page-break-inside: avoid;
+                }
+            }
+            `}
         </style>
         <div className="print:block hidden text-center mb-8">
             <h1 className="text-2xl font-bold">{tenant.name} - Sales Report</h1>
@@ -115,7 +95,6 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
             </CardDescription>
             </CardHeader>
             <CardContent>
-            <ScrollArea className="h-[400px]">
                 <Table>
                   <TableHeader>
                       <TableRow>
@@ -159,10 +138,8 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                       )}
                   </TableBody>
                 </Table>
-            </ScrollArea>
             </CardContent>
         </Card>
       </div>
-    </div>
   );
 }
