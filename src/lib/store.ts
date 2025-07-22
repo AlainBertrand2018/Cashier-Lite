@@ -15,7 +15,8 @@ interface AppState {
   lastCompletedOrder: Order | null;
   selectedTenantId: number | null;
   selectedCashierId: string | null;
-  fetchTenants: (force?: boolean) => Promise<void>;
+  isReportingDone: boolean;
+  fetchTenants: () => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
   addProductToOrder: (product: Product) => void;
@@ -35,6 +36,7 @@ interface AppState {
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
+  setReportingDone: (isDone: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -48,8 +50,9 @@ export const useStore = create<AppState>()(
       lastCompletedOrder: null,
       selectedTenantId: null,
       selectedCashierId: null,
+      isReportingDone: false,
 
-      fetchTenants: async (force = false) => {
+      fetchTenants: async () => {
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchTenants.");
           return;
@@ -194,7 +197,7 @@ export const useStore = create<AppState>()(
       },
 
       clearCompletedOrders: () => {
-        set({ completedOrders: [] });
+        set({ completedOrders: [], isReportingDone: false });
       },
       
       setLastCompletedOrder: (order: Order | null) => {
@@ -290,7 +293,7 @@ export const useStore = create<AppState>()(
           return null;
         }
         
-        await get().fetchTenants(true);
+        await get().fetchTenants();
 
         return data?.tenant_id || null;
       },
@@ -420,7 +423,11 @@ export const useStore = create<AppState>()(
         get().markOrdersAsSynced(syncedOrderIds);
 
         return { success: true, syncedCount: unsyncedOrders.length };
-      }
+      },
+
+      setReportingDone: (isDone: boolean) => {
+        set({ isReportingDone: isDone });
+      },
 
     }),
     {

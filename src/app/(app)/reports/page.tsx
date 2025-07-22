@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import RevenueReport from '@/components/revenue-report';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/lib/store';
-import { Eraser, FileDown } from 'lucide-react';
+import { Check, Eraser, FileDown } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -25,13 +25,15 @@ import html2canvas from 'html2canvas';
 export default function ReportsPage() {
   const [isClient, setIsClient] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const { clearCompletedOrders, completedOrders } = useStore();
+  const { clearCompletedOrders, completedOrders, isReportingDone, setReportingDone } = useStore();
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // Reset reporting done status on page load to ensure it's a conscious choice each time
+    setReportingDone(false);
+  }, [setReportingDone]);
 
   const handleResetShift = () => {
     clearCompletedOrders();
@@ -112,9 +114,18 @@ export default function ReportsPage() {
             </div>
             <div className="flex gap-2">
                  <Button 
+                    variant="outline" 
+                    onClick={() => setReportingDone(true)}
+                    disabled={completedOrders.length === 0 || isReportingDone}
+                >
+                    <Check className="mr-2 h-4 w-4" />
+                    Reporting Done
+                </Button>
+                <Button 
                     variant="destructive" 
                     onClick={() => setIsResetDialogOpen(true)}
-                    disabled={completedOrders.length === 0}
+                    disabled={completedOrders.length === 0 || !isReportingDone}
+                    title={!isReportingDone ? "Please confirm 'Reporting Done' before resetting." : "Reset all shift data"}
                 >
                     <Eraser className="mr-2 h-4 w-4" />
                     Reset Shift
