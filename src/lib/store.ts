@@ -50,10 +50,6 @@ export const useStore = create<AppState>()(
       selectedCashierId: null,
 
       fetchTenants: async (force = false) => {
-        if (!force && get().tenants.length > 0) {
-            return;
-        }
-
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchTenants.");
           return;
