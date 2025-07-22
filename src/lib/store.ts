@@ -16,8 +16,8 @@ interface AppState {
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
   addProductToOrder: (product: Product) => void;
-  removeProductFromOrder: (productId: number) => void;
-  updateProductQuantity: (productId: number, quantity: number) => void;
+  removeProductFromOrder: (productId: string) => void;
+  updateProductQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
   completeOrder: () => void;
   setLastCompletedOrder: (order: Order | null) => void;
@@ -26,8 +26,8 @@ interface AppState {
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
-  editProduct: (productId: number, data: { name: string; price: number }) => Promise<void>;
-  deleteProduct: (productId: number) => Promise<void>;
+  editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
 }
 
@@ -271,7 +271,7 @@ export const useStore = create<AppState>()(
         }
       },
 
-      deleteProduct: async (productId: number) => {
+      deleteProduct: async (productId: string) => {
         const { products } = get();
         const productToDelete = products.find(p => p.id === productId);
 
@@ -295,7 +295,6 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        // products are now fetched from db, so we don't persist them.
       }),
     }
   )

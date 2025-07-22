@@ -1,8 +1,9 @@
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   tenant_id: number;
+  created_at?: string;
 }
 
 export interface Tenant {

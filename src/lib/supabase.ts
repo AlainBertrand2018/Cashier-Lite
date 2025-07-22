@@ -24,14 +24,14 @@ export type Database = {
       },
       products: {
         Row: {
-            id: number;
+            id: string;
             name: string;
             price: number;
             tenant_id: number;
             created_at: string;
         };
-        Insert: Omit<Product, 'id'> & { created_at?: string };
-        Update: Partial<Omit<Product, 'id'>>;
+        Insert: Omit<Product, 'id' | 'created_at'>;
+        Update: Partial<Omit<Product, 'id' | 'created_at'>>;
       }
     }
     Functions: {}

@@ -1,20 +1,10 @@
--- Create the products table
-CREATE TABLE products (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name TEXT NOT NULL,
-    price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
-    tenant_id BIGINT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_tenant
-        FOREIGN KEY(tenant_id) 
-        REFERENCES tenants(tenant_id)
-        ON DELETE CASCADE
-);
-
--- RLS policies for products table (optional, for future use)
--- We are keeping it disabled for now as requested.
--- ALTER TABLE products ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Allow public read access" ON products FOR SELECT USING (true);
--- CREATE POLICY "Allow authenticated users to insert" ON products FOR INSERT WITH CHECK (auth.role() = 'authenticated');
--- CREATE POLICY "Allow users to update their own products" ON products FOR UPDATE USING (auth.uid() = user_id);
--- CREATE POLICY "Allow users to delete their own products" ON products FOR DELETE USING (auth.uid() = user_id);
+create table
+  public.products (
+    id uuid not null default gen_random_uuid (),
+    name character varying not null,
+    price double precision not null,
+    tenant_id bigint not null,
+    created_at timestamp with time zone not null default now(),
+    constraint products_pkey primary key (id),
+    constraint products_tenant_id_fkey foreign key (tenant_id) references tenants (tenant_id) on update cascade on delete cascade
+  ) tablespace pg_default;
