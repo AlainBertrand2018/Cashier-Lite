@@ -295,6 +295,7 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
+        products: state.products,
       }),
     }
   )
