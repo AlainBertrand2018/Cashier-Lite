@@ -22,6 +22,7 @@ interface AppState {
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
+  clearCompletedOrders: () => void;
   completeOrder: () => Promise<void>;
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
@@ -194,6 +195,10 @@ export const useStore = create<AppState>()(
 
       clearCurrentOrder: () => {
         set({ currentOrder: [] });
+      },
+
+      clearCompletedOrders: () => {
+        set({ completedOrders: [] });
       },
       
       setLastCompletedOrder: (order: Order | null) => {
@@ -375,7 +380,7 @@ export const useStore = create<AppState>()(
           return { success: false, syncedCount: 0, error: new Error('Supabase not configured.') };
         }
 
-        const { completedOrders } = get();
+        const { completedOrders, selectedCashierId } = get();
         const unsyncedOrders = completedOrders.filter(o => !o.synced);
 
         if (unsyncedOrders.length === 0) {
@@ -389,7 +394,7 @@ export const useStore = create<AppState>()(
           vat: o.vat,
           total: o.total,
           created_at: new Date(o.createdAt).toISOString(),
-          cashier_id: o.cashierId || null,
+          cashier_id: o.cashierId || selectedCashierId || null,
         }));
 
         const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert);
