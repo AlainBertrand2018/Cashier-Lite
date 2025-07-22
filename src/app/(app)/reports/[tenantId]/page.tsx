@@ -51,7 +51,7 @@ export default function TenantReportPage() {
 
       // Body Metadata
       pdf.setFontSize(10).setFont('helvetica', 'normal');
-      pdf.text(`Date: ${new Date().toLocaleDateString()}`, margin, currentY);
+      pdf.text(`Date & Time: ${new Date().toLocaleString()}`, margin, currentY);
       pdf.text(`Tenant ID: ${tenant.tenant_id}`, pdfWidth - margin, currentY, { align: 'right'});
       currentY += 5;
       pdf.text(`Stand No.: ${tenant.tenant_id}`, pdfWidth - margin, currentY, { align: 'right' });
