@@ -145,6 +145,7 @@ export const useStore = create<AppState>()(
           .insert({
             current_cashier_id: cashier.id,
             last_login_at: new Date().toISOString(),
+            starting_float: floatAmount,
           })
           .select()
           .single();

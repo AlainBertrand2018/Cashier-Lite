@@ -116,6 +116,7 @@ export type Database = {
           is_active: boolean;
           current_cashier_id: string | null;
           last_login_at: string | null;
+          starting_float: number;
         };
         Insert: {
             id?: string;
@@ -123,6 +124,7 @@ export type Database = {
             is_active?: boolean;
             current_cashier_id?: string | null;
             last_login_at?: string | null;
+            starting_float?: number;
         };
       }
     }
