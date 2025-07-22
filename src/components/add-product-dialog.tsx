@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,7 +64,7 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
       return;
     }
     setIsSubmitting(true);
-    const newProduct = await addProduct({ ...values, tenant_id: tenantId });
+    const newProduct = await addProduct(values.name, values.price, tenantId);
     setIsSubmitting(false);
 
     if (newProduct) {

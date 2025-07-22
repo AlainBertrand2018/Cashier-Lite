@@ -25,7 +25,7 @@ interface AppState {
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
-  addProduct: (productData: { name: string; price: number; tenant_id: number; }) => Promise<Product | null>;
+  addProduct: (name: string, price: number, tenant_id: number) => Promise<Product | null>;
   editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
@@ -225,7 +225,7 @@ export const useStore = create<AppState>()(
         return data?.tenant_id || null;
       },
       
-      addProduct: async (productData: { name: string; price: number; tenant_id: number; }) => {
+      addProduct: async (name: string, price: number, tenant_id: number) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot add product.');
           return null;
@@ -234,9 +234,9 @@ export const useStore = create<AppState>()(
         const { data, error } = await supabase
           .from('products')
           .insert({
-            name: productData.name,
-            price: productData.price,
-            tenant_id: productData.tenant_id,
+            name,
+            price,
+            tenant_id,
           })
           .select()
           .single();
@@ -299,7 +299,6 @@ export const useStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
        partialize: (state) => ({ 
         completedOrders: state.completedOrders,
-        products: state.products,
       }),
     }
   )
