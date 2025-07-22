@@ -15,10 +15,10 @@ function TenantCard({ tenant }: { tenant: Tenant }) {
     <Link href={`/tenants/${tenant.tenant_id}`} passHref>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
         <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
-          <div className="text-6xl font-bold tracking-tighter mb-2">{tenant.tenant_id}</div>
-          <div className="font-semibold text-lg">{tenant.name}</div>
+          <div className="text-5xl font-extrabold tracking-tighter mb-4">{`[${tenant.tenant_id}]`}</div>
+          <div className="font-semibold text-xl mb-2">{`[${tenant.name}]`}</div>
           {tenant.mobile && (
-            <div className="text-muted-foreground">{tenant.mobile}</div>
+            <div className="text-muted-foreground text-lg">{`[${tenant.mobile}]`}</div>
           )}
         </CardContent>
       </Card>
@@ -66,7 +66,7 @@ export default function TenantSelectionGrid() {
           <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
           {isLoading ? <TenantGridSkeleton /> : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {sortedTenants.map((tenant: Tenant) => (
+                {sortedTenants.map((tenant) => (
                   <TenantCard key={tenant.tenant_id} tenant={tenant} />
                 ))}
                 <Card
