@@ -19,7 +19,7 @@ interface AppState {
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
-  completeOrder: () => void;
+  completeOrder: () => Promise<void>;
   setLastCompletedOrder: (order: Order | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
@@ -168,7 +168,7 @@ export const useStore = create<AppState>()(
         set({ lastCompletedOrder: order });
       },
       
-      completeOrder: () => {
+      completeOrder: async () => {
         const { currentOrder, selectedTenantId } = get();
         if (currentOrder.length === 0 || !selectedTenantId) return;
 
@@ -179,7 +179,7 @@ export const useStore = create<AppState>()(
         const vat = subtotal * 0.15;
         const total = subtotal + vat;
 
-        const newOrder: Order = {
+        const newOrder: Omit<Order, 'synced'> = {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           tenantId: selectedTenantId,
           items: currentOrder,
@@ -187,12 +187,48 @@ export const useStore = create<AppState>()(
           vat,
           total,
           createdAt: Date.now(),
-          synced: false,
+        };
+
+        let isSynced = false;
+        if (supabase) {
+            const orderToInsert = {
+                id: newOrder.id,
+                tenant_id: newOrder.tenantId,
+                subtotal: newOrder.subtotal,
+                vat: newOrder.vat,
+                total: newOrder.total,
+                created_at: new Date(newOrder.createdAt).toISOString(),
+                cashier_id: null, // You can set this if you have cashier logic
+            };
+            const { error: orderError } = await supabase.from('orders').insert(orderToInsert);
+
+            if (!orderError) {
+                const orderItemsToInsert = newOrder.items.map(item => ({
+                    order_id: newOrder.id,
+                    product_id: item.id,
+                    quantity: item.quantity,
+                    price: item.price,
+                }));
+                const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
+                if (!itemsError) {
+                    isSynced = true;
+                } else {
+                    console.error("Error saving order items, will sync later:", itemsError);
+                    // In a real app, you might want to delete the order record if items fail
+                }
+            } else {
+                 console.error("Error saving order, will sync later:", orderError);
+            }
+        }
+        
+        const finalOrder: Order = {
+            ...newOrder,
+            synced: isSynced,
         };
         
         set((state) => ({
-          completedOrders: [...state.completedOrders, newOrder],
-          lastCompletedOrder: newOrder,
+          completedOrders: [...state.completedOrders, finalOrder],
+          lastCompletedOrder: finalOrder,
           currentOrder: [],
         }));
       },
@@ -226,7 +262,7 @@ export const useStore = create<AppState>()(
         return data?.tenant_id || null;
       },
       
-      addProduct: async (name: string, price: number, tenant_id: number) => {
+      addProduct: async (name, price, tenant_id) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot add product.');
           return null;

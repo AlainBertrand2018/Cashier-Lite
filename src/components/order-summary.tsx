@@ -7,7 +7,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function OrderSummary() {
   const { 
@@ -17,6 +18,8 @@ export default function OrderSummary() {
     clearCurrentOrder,
     completeOrder 
   } = useStore();
+  
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const subtotal = currentOrder.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -25,9 +28,11 @@ export default function OrderSummary() {
   const vat = subtotal * 0.15;
   const total = subtotal + vat;
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (currentOrder.length > 0) {
-      completeOrder();
+      setIsPlacingOrder(true);
+      await completeOrder();
+      setIsPlacingOrder(false);
     }
   };
 
@@ -93,15 +98,16 @@ export default function OrderSummary() {
         <Button 
           className="w-full bg-accent text-accent-foreground hover:bg-accent/90" 
           onClick={handlePlaceOrder}
-          disabled={currentOrder.length === 0}
+          disabled={currentOrder.length === 0 || isPlacingOrder}
         >
-          Place Order
+          {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
         </Button>
         <Button 
           variant="outline" 
           className="w-full" 
           onClick={clearCurrentOrder}
-          disabled={currentOrder.length === 0}
+          disabled={currentOrder.length === 0 || isPlacingOrder}
         >
           Clear Order
         </Button>
