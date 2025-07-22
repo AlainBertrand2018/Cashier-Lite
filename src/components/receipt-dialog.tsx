@@ -58,10 +58,18 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
             <span>{orderDate.toLocaleString()}</span>
         </div>
         {tenant && (
-            <div className="flex justify-between">
-                <span>Tenant ID:</span>
-                <span className="font-mono">{tenant.tenant_id} ({tenant.name})</span>
-            </div>
+            <>
+                <div className="flex justify-between">
+                    <span>Tenant ID:</span>
+                    <span className="font-mono">{tenant.tenant_id} ({tenant.name})</span>
+                </div>
+                {(tenant.brn || tenant.vat) && (
+                    <div className="flex justify-between">
+                        <span>BRN / VAT:</span>
+                        <span className="font-mono">{tenant.brn || 'N/A'} / {tenant.vat || 'N/A'}</span>
+                    </div>
+                )}
+            </>
         )}
       </div>
       <Separator />
