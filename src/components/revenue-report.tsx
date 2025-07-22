@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DollarSign, Hash, CheckCircle, Clock, Printer, Users } from 'lucide-react';
+import { DollarSign, Hash, CheckCircle, Clock, Printer, Users, TrendingDown } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import type { Tenant } from '@/lib/types';
@@ -49,7 +49,11 @@ export default function RevenueReport() {
       tenantShare: revenueForTenant * 0.7,
       organizerShare: revenueForTenant * 0.3,
     };
-  }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  });
+
+  const topTenants = [...tenantReports].sort((a, b) => b.totalRevenue - a.totalRevenue);
+  const worstTenants = [...tenantReports].sort((a, b) => a.totalRevenue - b.totalRevenue).slice(0, 5);
+
 
   const handlePrint = () => {
     const printContents = document.getElementById('revenue-sharing-content')?.innerHTML;
@@ -108,11 +112,11 @@ export default function RevenueReport() {
         </Card>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Sales by Tenant</CardTitle>
-            <CardDescription>A breakdown of sales for each tenant. Click a tenant for a detailed report.</CardDescription>
+            <CardDescription>A breakdown of sales for each tenant, sorted by best performing.</CardDescription>
           </CardHeader>
           <CardContent>
              <ScrollArea className="h-[300px]">
@@ -120,24 +124,22 @@ export default function RevenueReport() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tenant</TableHead>
-                    <TableHead className="text-center">Orders</TableHead>
                     <TableHead className="text-right">Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenantReports.filter(r => r.orderCount > 0).map(report => (
+                  {topTenants.filter(r => r.orderCount > 0).map(report => (
                      <TableRow key={report.id} onClick={() => router.push(`/reports/${report.id}`)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{report.name}</div>
-                        <div className="text-xs text-muted-foreground">ID: {report.id}</div>
+                        <div className="text-xs text-muted-foreground">Orders: {report.orderCount}</div>
                       </TableCell>
-                      <TableCell className="text-center">{report.orderCount}</TableCell>
                       <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
-                   {tenantReports.filter(r => r.orderCount > 0).length === 0 && (
+                   {topTenants.filter(r => r.orderCount > 0).length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={3} className="h-24 text-center">
+                        <TableCell colSpan={2} className="h-24 text-center">
                             No sales data available.
                         </TableCell>
                     </TableRow>
@@ -147,8 +149,45 @@ export default function RevenueReport() {
             </ScrollArea>
           </CardContent>
         </Card>
+        
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Worst Sales</CardTitle>
+            <CardDescription>The 5 tenants with the lowest sales revenue for the shift.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[300px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead className="text-right">Revenue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {worstTenants.filter(r => r.orderCount > 0).map(report => (
+                    <TableRow key={report.id} onClick={() => router.push(`/reports/${report.id}`)} className="cursor-pointer">
+                      <TableCell>
+                        <div className="font-medium">{report.name}</div>
+                        <div className="text-xs text-muted-foreground">Orders: {report.orderCount}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">Rs {report.totalRevenue.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {worstTenants.filter(r => r.orderCount > 0).length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="h-24 text-center">
+                        No sales data available.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Revenue Sharing</CardTitle>
@@ -195,14 +234,14 @@ export default function RevenueReport() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenantReports.filter(r => r.orderCount > 0).map(report => (
+                  {topTenants.filter(r => r.orderCount > 0).map(report => (
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">{report.name}</TableCell>
                       <TableCell className="text-right font-mono">Rs {report.tenantShare.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-mono">Rs {report.organizerShare.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
-                  {tenantReports.filter(r => r.orderCount > 0).length === 0 && (
+                  {topTenants.filter(r => r.orderCount > 0).length === 0 && (
                     <TableRow>
                         <TableCell colSpan={3} className="h-24 text-center">
                             No revenue data available.
