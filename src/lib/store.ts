@@ -241,11 +241,11 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
-      // We only persist data that is not fetched from the DB
+      // We only persist data that should be available offline.
+      // Tenants are now fetched from Supabase and should not be persisted.
       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         products: state.products,
-        // tenants are now fetched from supabase
       }),
     }
   )
