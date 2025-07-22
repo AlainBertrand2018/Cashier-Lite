@@ -231,18 +231,25 @@ export const useStore = create<AppState>()(
           return null;
         }
 
-        const { data, error } = await supabase
-          .from('products')
-          .insert({
+        const productToInsert = {
             name,
-            price,
+            price: Number(price),
             tenant_id,
-          })
+        };
+
+        const { data, error, statusText } = await supabase
+          .from('products')
+          .insert(productToInsert)
           .select()
           .single();
 
         if (error) {
-          console.error('Error adding product:', error);
+          console.error('Error adding product:', {
+            message: error.message,
+            details: error.details,
+            code: error.code,
+            statusText,
+          });
           return null;
         }
         
@@ -258,15 +265,26 @@ export const useStore = create<AppState>()(
           console.error('Supabase not configured. Cannot edit product.');
           return;
         }
-        const { data, error } = await supabase
+
+        const productToUpdate = {
+            ...productData,
+            price: Number(productData.price),
+        };
+
+        const { data, error, statusText } = await supabase
           .from('products')
-          .update(productData)
+          .update(productToUpdate)
           .eq('id', productId)
           .select()
           .single();
         
         if(error) {
-            console.error('Error editing product:', error);
+            console.error('Error editing product:', {
+                message: error.message,
+                details: error.details,
+                code: error.code,
+                statusText,
+            });
             return;
         }
         
