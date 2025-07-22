@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useStore } from '@/lib/store';
@@ -31,16 +32,16 @@ export default function OrderSummary() {
   };
 
   return (
-    <Card className="sticky top-24">
+    <Card className="sticky top-24 flex flex-col h-[calc(100vh-8rem)]">
       <CardHeader>
         <CardTitle>Current Order</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[calc(100vh-500px)] pr-4">
+      <CardContent className="flex-grow overflow-hidden p-0">
+        <ScrollArea className="h-full px-6">
           {currentOrder.length === 0 ? (
-            <p className="text-muted-foreground">Select products to start an order.</p>
+            <p className="text-muted-foreground py-6">Select products to start an order.</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 py-6">
               {currentOrder.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-4">
                   <div className="flex-grow">
@@ -69,6 +70,8 @@ export default function OrderSummary() {
             </div>
           )}
         </ScrollArea>
+      </CardContent>
+      <div className="mt-auto p-6 pt-0">
         <Separator className="my-4" />
         <div className="space-y-2 text-muted-foreground">
             <div className="flex justify-between">
@@ -85,7 +88,7 @@ export default function OrderSummary() {
           <span>Total</span>
           <span>Rs {total.toFixed(2)}</span>
         </div>
-      </CardContent>
+      </div>
       <CardFooter className="flex flex-col gap-2">
         <Button 
           className="w-full bg-accent text-accent-foreground hover:bg-accent/90" 
