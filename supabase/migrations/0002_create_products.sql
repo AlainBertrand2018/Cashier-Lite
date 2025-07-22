@@ -1,10 +1,14 @@
-create table
-  public.products (
-    id uuid not null default gen_random_uuid (),
-    name character varying not null,
-    price double precision not null,
-    tenant_id bigint not null,
-    created_at timestamp with time zone not null default now(),
-    constraint products_pkey primary key (id),
-    constraint products_tenant_id_fkey foreign key (tenant_id) references tenants (tenant_id) on update cascade on delete cascade
-  ) tablespace pg_default;
+-- Create the products table
+create table products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  price numeric not null,
+  tenant_id bigint not null,
+  created_at timestamptz not null default now(),
+  constraint fk_tenant
+    foreign key(tenant_id) 
+    references tenants(tenant_id)
+    on delete cascade
+);
+
+alter table products enable row level security;
