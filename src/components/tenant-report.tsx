@@ -9,6 +9,7 @@ import { ArrowLeft, DollarSign, Hash, Printer } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import Link from 'next/link';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 interface TenantReportProps {
   tenant: Tenant;
@@ -56,6 +57,9 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                   }
                   .print\\:hidden {
                     display: none;
+                  }
+                  .no-print-break {
+                     page-break-inside: avoid;
                   }
                 }
               `}
@@ -107,7 +111,7 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
             <CardHeader>
             <CardTitle>All Orders</CardTitle>
             <CardDescription>
-                A log of all individual transactions for this tenant during the shift.
+                A log of all individual transactions for this tenant. Click on an order to see a detailed breakdown of items.
             </CardDescription>
             </CardHeader>
             <CardContent>
@@ -115,35 +119,61 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Date/Time</TableHead>
-                    <TableHead># Items</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                        <TableHead>Order Details</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-right">Order Total</TableHead>
                     </TableRow>
                 </TableHeader>
-                <TableBody>
-                    {sortedOrders.map((order) => (
-                    <TableRow key={order.id}>
-                        <TableCell className="font-mono text-xs">{order.id.split('-')[1]}</TableCell>
-                        <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
-                        <TableCell>{order.items.reduce((sum, item) => sum + item.quantity, 0)}</TableCell>
-                        <TableCell>
-                        <Badge variant={order.synced ? 'default' : 'secondary'} className={order.synced ? 'bg-green-500/20 text-green-700' : ''}>
-                            {order.synced ? 'Synced' : 'Local'}
-                        </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">Rs {order.total.toFixed(2)}</TableCell>
-                    </TableRow>
-                    ))}
-                    {sortedOrders.length === 0 && (
-                    <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                        No orders found for this tenant.
-                        </TableCell>
-                    </TableRow>
-                    )}
-                </TableBody>
+                <Accordion type="multiple" asChild>
+                    <TableBody>
+                        {sortedOrders.length > 0 ? sortedOrders.map((order) => (
+                        <AccordionItem value={order.id} key={order.id} className="border-b no-print-break">
+                            <AccordionTrigger className="hover:no-underline [&[data-state=open]>td>svg]:rotate-180">
+                                <TableCell className="font-medium">
+                                    <div className="font-mono text-xs">ID: {order.id.split('-')[1]}</div>
+                                    <div className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleString()}</div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <Badge variant={order.synced ? 'default' : 'secondary'} className={order.synced ? 'bg-green-500/20 text-green-700' : ''}>
+                                        {order.synced ? 'Synced' : 'Local'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right font-medium">Rs {order.total.toFixed(2)}</TableCell>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <TableCell colSpan={3} className="p-2 bg-muted/50">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="h-8">Product Name</TableHead>
+                                                <TableHead className="h-8 text-center">Quantity</TableHead>
+                                                <TableHead className="h-8 text-right">Unit Price</TableHead>
+                                                <TableHead className="h-8 text-right">Line Total</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {order.items.map((item) => (
+                                                <TableRow key={item.id}>
+                                                    <TableCell>{item.name}</TableCell>
+                                                    <TableCell className="text-center">{item.quantity}</TableCell>
+                                                    <TableCell className="text-right">Rs {item.price.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right">Rs {(item.price * item.quantity).toFixed(2)}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableCell>
+                            </AccordionContent>
+                        </AccordionItem>
+                        )) : (
+                        <TableRow>
+                            <TableCell colSpan={3} className="h-24 text-center">
+                            No orders found for this tenant.
+                            </TableCell>
+                        </TableRow>
+                        )}
+                    </TableBody>
+                </Accordion>
                 </Table>
             </ScrollArea>
             </CardContent>
