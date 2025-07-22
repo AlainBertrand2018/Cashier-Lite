@@ -15,10 +15,10 @@ function TenantCard({ tenant }: { tenant: Tenant }) {
     <Link href={`/tenants/${tenant.tenant_id}`} passHref>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
         <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
-          <div className="text-5xl font-extrabold tracking-tighter mb-4">{`[${tenant.tenant_id}]`}</div>
-          <div className="font-semibold text-xl mb-2">{`[${tenant.name}]`}</div>
+          <div className="text-5xl font-extrabold tracking-tighter mb-4">{tenant.tenant_id}</div>
+          <div className="font-semibold text-xl mb-2">{tenant.name}</div>
           {tenant.mobile && (
-            <div className="text-muted-foreground text-lg">{`[${tenant.mobile}]`}</div>
+            <div className="text-muted-foreground text-lg">{tenant.mobile}</div>
           )}
         </CardContent>
       </Card>
