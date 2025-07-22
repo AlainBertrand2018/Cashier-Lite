@@ -115,7 +115,7 @@ export default function RevenueReport() {
       <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Sales by Tenant</CardTitle>
+            <CardTitle>Top Sales</CardTitle>
             <CardDescription>A breakdown of sales for each tenant, sorted by best performing.</CardDescription>
           </CardHeader>
           <CardContent>
