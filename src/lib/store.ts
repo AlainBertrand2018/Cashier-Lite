@@ -25,7 +25,7 @@ interface AppState {
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
-  addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
+  addProduct: (productData: { name: string; price: number; tenant_id: number; }) => Promise<Product | null>;
   editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
@@ -42,9 +42,8 @@ export const useStore = create<AppState>()(
       selectedTenantId: null,
 
       fetchTenants: async (force = false) => {
-        const { tenants } = get();
-        if (tenants.length > 0 && !force) {
-          return;
+        if (!force && get().tenants.length > 0) {
+            return;
         }
 
         if (!supabase) {
@@ -226,14 +225,19 @@ export const useStore = create<AppState>()(
         return data?.tenant_id || null;
       },
       
-      addProduct: async (productData) => {
+      addProduct: async (productData: { name: string; price: number; tenant_id: number; }) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot add product.');
           return null;
         }
+
         const { data, error } = await supabase
           .from('products')
-          .insert(productData)
+          .insert({
+            name: productData.name,
+            price: productData.price,
+            tenant_id: productData.tenant_id,
+          })
           .select()
           .single();
 
@@ -293,7 +297,7 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+       partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         products: state.products,
       }),
