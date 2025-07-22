@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { create } from 'zustand';
@@ -305,10 +306,10 @@ export const useStore = create<AppState>()(
                 if (!itemsError) {
                     isSynced = true;
                 } else {
-                    console.error("Error saving order items, will sync later:", itemsError);
+                    console.error("Error saving order items, will sync later:", JSON.stringify(itemsError, null, 2));
                 }
             } else {
-                 console.error("Error saving order, will sync later:", orderError);
+                 console.error("Error saving order, will sync later:", JSON.stringify(orderError, null, 2));
             }
         }
         
