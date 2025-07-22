@@ -63,10 +63,16 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                     <span>Tenant ID:</span>
                     <span className="font-mono">{tenant.tenant_id} ({tenant.name})</span>
                 </div>
-                {(tenant.brn || tenant.vat) && (
+                {tenant.brn && (
                     <div className="flex justify-between">
-                        <span>BRN / VAT:</span>
-                        <span className="font-mono">{tenant.brn || 'N/A'} / {tenant.vat || 'N/A'}</span>
+                        <span>BRN:</span>
+                        <span className="font-mono">{tenant.brn}</span>
+                    </div>
+                )}
+                {tenant.vat && (
+                    <div className="flex justify-between">
+                        <span>VAT Number:</span>
+                        <span className="font-mono">{tenant.vat}</span>
                     </div>
                 )}
             </>
