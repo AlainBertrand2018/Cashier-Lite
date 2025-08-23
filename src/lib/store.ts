@@ -58,11 +58,11 @@ export const useStore = create<AppState>()(
       activeShift: null,
 
       fetchTenants: async (force = false) => {
-        if (!force && get().tenants.length > 0) {
-          return;
-        }
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchTenants.");
+          return;
+        }
+        if (!force && get().tenants.length > 0) {
           return;
         }
         const { data, error } = await supabase.from('tenants').select();
@@ -104,11 +104,11 @@ export const useStore = create<AppState>()(
       },
 
        fetchCashiers: async (force = false) => {
-        if (!force && get().cashiers.length > 0) {
+        if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchCashiers.");
           return;
         }
-         if (!supabase) {
-          console.log("Supabase not configured. Skipping fetchCashiers.");
+        if (!force && get().cashiers.length > 0) {
           return;
         }
         const { data, error } = await supabase.from('cashiers').select();
