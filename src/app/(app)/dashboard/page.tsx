@@ -1,3 +1,4 @@
+
 'use client';
 
 import AddCashierDialog from '@/components/add-cashier-dialog';
@@ -34,7 +35,7 @@ export default function DashboardPage() {
           ) : (
             <>
               <h1 className="text-3xl font-bold tracking-tight mb-2">Select a Tenant</h1>
-              <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
+              <p className="text-muted-foreground mb-8">Choose the tenant to start a new order.</p>
             </>
           )}
           <TenantSelectionGrid />
