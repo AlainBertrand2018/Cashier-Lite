@@ -40,6 +40,7 @@ export default function DashboardPage() {
     setActiveEvent,
     lastCompletedOrder,
     setLastCompletedOrder,
+    activeShift, // Get activeShift to access the role
   } = useStore();
   
   const [isClient, setIsClient] = useState(false);
@@ -72,7 +73,6 @@ export default function DashboardPage() {
     
     const loadData = async () => {
       setIsLoading(true);
-      const { activeShift } = useStore.getState();
 
       // Common fetches for both admin and cashier
       const promises = [
@@ -89,6 +89,7 @@ export default function DashboardPage() {
         );
       } else if (activeShift) {
         // Cashier only fetches product types relevant to their role
+        // FIX: Pass the role from activeShift to fetchProductTypes
         promises.push(fetchProductTypes(activeShift.role));
       }
       
@@ -97,7 +98,7 @@ export default function DashboardPage() {
     };
 
     loadData();
-  }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts, fetchProductTypes]);
+  }, [activeAdmin, activeShift, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts, fetchProductTypes]);
 
   const handleToggleActive = (eventId: number | undefined | null, newIsActive: boolean) => {
     if (newIsActive && eventId) {
