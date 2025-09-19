@@ -5,6 +5,24 @@ import type { Tenant, Product, Order } from './types';
 export type Database = {
   public: {
     Tables: {
+      events: {
+        Row: {
+          id: number;
+          created_at: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          venue: string | null;
+          event_manager: string | null;
+        };
+        Insert: {
+          name: string;
+          start_date: string;
+          end_date: string;
+          venue?: string | null;
+          event_manager?: string | null;
+        };
+      };
       tenants: {
         Row: {
           tenant_id: number;
@@ -116,6 +134,7 @@ export type Database = {
           tenant_id: number | null;
           report_data_json: any;
           storage_path: string | null;
+          event_id: number | null;
         };
       },
       receipts: {
@@ -126,6 +145,7 @@ export type Database = {
           generated_by_cashier_id: string;
           receipt_data_json: any;
           storage_path: string | null;
+          event_id: number | null;
         };
       },
       cashing_stations: {
@@ -137,6 +157,7 @@ export type Database = {
           current_cashier_id: string | null;
           last_login_at: string | null;
           starting_float: number;
+          event_id: number | null;
         };
         Insert: {
             id?: string;
@@ -145,6 +166,7 @@ export type Database = {
             current_cashier_id?: string | null;
             last_login_at?: string | null;
             starting_float?: number;
+            event_id?: number | null;
         };
       }
     }

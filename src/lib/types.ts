@@ -1,5 +1,15 @@
 
 
+export interface Event {
+  id: number;
+  created_at: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  venue?: string;
+  event_manager?: string;
+}
+
 export interface ProductType {
   id: number;
   name: string;
@@ -63,6 +73,7 @@ export interface ActiveShift {
     cashierName: string;
     floatAmount: number;
     startTime: string;
+    eventId: number;
 }
 
 export interface ActiveAdmin {

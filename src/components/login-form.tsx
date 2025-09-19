@@ -25,12 +25,13 @@ import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { Cashier } from '@/lib/types';
+import type { Cashier, Event } from '@/lib/types';
 import { Card, CardContent } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 
 const cashierFormSchema = z.object({
+  eventId: z.string().min(1, { message: 'Please select an event.' }),
   cashierId: z.string().min(1, { message: 'Please select a cashier.' }),
   pin: z.string().length(4, { message: 'PIN must be 4 digits.' }),
   floatAmount: z.coerce.number().min(0, { message: 'Float must be a positive number.' }),
@@ -47,18 +48,20 @@ const adminSignUpSchema = z.object({
 });
 
 export default function LoginForm() {
-  const { cashiers, fetchCashiers, startShift, adminLogin, adminSignUp } = useStore();
+  const { cashiers, events, fetchCashiers, fetchEvents, startShift, adminLogin, adminSignUp } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminTab, setAdminTab] = useState('login');
 
   useEffect(() => {
     fetchCashiers(true);
-  }, [fetchCashiers]);
+    fetchEvents(true);
+  }, [fetchCashiers, fetchEvents]);
 
   const cashierForm = useForm<z.infer<typeof cashierFormSchema>>({
     resolver: zodResolver(cashierFormSchema),
     defaultValues: {
+      eventId: '',
       cashierId: '',
       pin: '',
       floatAmount: 0,
@@ -83,7 +86,7 @@ export default function LoginForm() {
 
   async function onCashierSubmit(values: z.infer<typeof cashierFormSchema>) {
     setIsSubmitting(true);
-    const success = await startShift(values.cashierId, values.pin, values.floatAmount);
+    const success = await startShift(parseInt(values.eventId, 10), values.cashierId, values.pin, values.floatAmount);
     setIsSubmitting(false);
 
     if (success) {
@@ -155,6 +158,30 @@ export default function LoginForm() {
           <TabsContent value="cashier" className="p-6">
              <Form {...cashierForm}>
               <form onSubmit={cashierForm.handleSubmit(onCashierSubmit)} className="space-y-6">
+                <FormField
+                  control={cashierForm.control}
+                  name="eventId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an event to begin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {events.map((event: Event) => (
+                            <SelectItem key={event.id} value={String(event.id)}>
+                              {event.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={cashierForm.control}
                   name="cashierId"

@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType, Event } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
@@ -11,6 +11,7 @@ interface AppState {
   products: Product[];
   productTypes: ProductType[];
   cashiers: Cashier[];
+  events: Event[];
   currentOrder: OrderItem[];
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
@@ -23,8 +24,9 @@ interface AppState {
   fetchProducts: (tenantId: number) => Promise<void>;
   fetchProductTypes: () => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
+  fetchEvents: (force?: boolean) => Promise<void>;
 
-  startShift: (cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
+  startShift: (eventId: number, cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
   logoutShift: () => void;
   adminLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   adminSignUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -60,6 +62,7 @@ export const useStore = create<AppState>()(
       products: [],
       productTypes: [],
       cashiers: [],
+      events: [],
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
@@ -144,8 +147,24 @@ export const useStore = create<AppState>()(
         }
         set({ cashiers: data || [] });
       },
+
+      fetchEvents: async (force = false) => {
+        if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchEvents.");
+          return;
+        }
+        if (!force && get().events.length > 0) {
+          return;
+        }
+        const { data, error } = await supabase.from('events').select().order('start_date', { ascending: false });
+        if (error) {
+          console.error('Error fetching events:', error);
+          return;
+        }
+        set({ events: data || [] });
+      },
       
-      startShift: async (cashierId: string, pin: string, floatAmount: number) => {
+      startShift: async (eventId: number, cashierId: string, pin: string, floatAmount: number) => {
         if (!supabase) {
           console.error('Supabase not configured, cannot start shift.');
           return false;
@@ -169,6 +188,7 @@ export const useStore = create<AppState>()(
         const { data: station, error: stationError } = await supabase
           .from('cashing_stations')
           .insert({
+            event_id: eventId,
             current_cashier_id: cashier.id,
             last_login_at: new Date().toISOString(),
             starting_float: floatAmount,
@@ -188,6 +208,7 @@ export const useStore = create<AppState>()(
                 cashierName: cashier.name,
                 floatAmount: floatAmount,
                 startTime: new Date().toISOString(),
+                eventId: eventId,
             },
             activeAdmin: null,
             selectedTenantId: null,
