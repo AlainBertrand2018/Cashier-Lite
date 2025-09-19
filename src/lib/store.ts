@@ -138,7 +138,7 @@ export const useStore = create<AppState>()(
         }
         const { data, error } = await supabase.from('cashiers').select();
         if (error) {
-          console.error('Error fetching cashiers:', error);
+          console.log('Error fetching cashiers:', error);
           return;
         }
         set({ cashiers: data || [] });
@@ -469,7 +469,7 @@ export const useStore = create<AppState>()(
 
       deleteTenant: async (tenantId: number) => {
         if (!supabase) {
-          console.error('Supabase not configured. Cannot delete tenant.');
+          console.log('Supabase not configured. Cannot delete tenant.');
           return;
         }
 
@@ -655,3 +655,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    
