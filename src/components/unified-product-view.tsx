@@ -52,15 +52,19 @@ function ProductCard({ product }: { product: Product }) {
 function CategoryCard({ category, onSelect }: { category: ProductType, onSelect: () => void }) {
   const getIconForCategory = (categoryName: string) => {
     switch (categoryName.toLowerCase()) {
-      case 'non-alcoholic drinks':
+      case 'non-alcoholics':
         return '/images/NAD.svg';
+      case 'early tickets':
+        return '/images/ticket.svg';
+      case 'concert tickets':
+        return '/images/ticket_001.svg';
       case 'beer':
         return '/images/beer.svg';
       case 'wine':
         return '/images/wine-glass.svg';
       case 'spirit':
         return '/images/cocktail.svg';
-      case 'ticketing':
+      case 'ticketing': // Fallback for general ticketing
         return '/images/ticket.svg';
       default:
         return '/images/foodstuff.svg';
