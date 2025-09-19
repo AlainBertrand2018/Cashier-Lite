@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button';
 import ViewAllDialog from '@/components/view-all-dialog';
 import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
+import UnifiedProductView from '@/components/unified-product-view';
+import OrderSummary from '@/components/order-summary';
+import { Card } from '@/components/ui/card';
+import ConfirmTenantSwitchDialog from '@/components/confirm-tenant-switch-dialog';
+import ReceiptDialog from '@/components/receipt-dialog';
+import { useRouter } from 'next/navigation';
+
 
 export default function DashboardPage() {
   const { 
@@ -28,10 +35,14 @@ export default function DashboardPage() {
     fetchCashiers,
     fetchAllProducts,
     setActiveEvent,
+    lastCompletedOrder,
+    resetToTenantSelection,
   } = useStore();
   
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
 
   // Dialog states
   const [isAddCashierOpen, setIsAddCashierOpen] = useState(false);
@@ -43,23 +54,32 @@ export default function DashboardPage() {
   const [viewAllData, setViewAllData] = useState<any[]>([]);
   const [isViewAllOpen, setIsViewAllOpen] = useState(false);
 
+  const isReceiptOpen = !!lastCompletedOrder;
+  const setReceiptOpen = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetToTenantSelection();
+      // No need to route, we are already on the dashboard
+    }
+  };
+
 
   useEffect(() => {
     setIsClient(true);
-    setSelectedTenantId(null);
+    // For admins, reset tenant selection. For cashiers, this is handled by the new flow.
     if (activeAdmin) {
-      const loadAdminData = async () => {
-        setIsLoading(true);
-        await Promise.all([
-          fetchEvents(true),
-          fetchTenants(true),
-          fetchCashiers(true),
-          fetchAllProducts(),
-        ]);
-        setIsLoading(false);
-      };
-      loadAdminData();
+       setSelectedTenantId(null);
     }
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        fetchEvents(true),
+        fetchTenants(true),
+        fetchCashiers(true),
+        fetchAllProducts(), // Needed for both admin and cashier views
+      ]);
+      setIsLoading(false);
+    };
+    loadData();
   }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts]);
 
   const handleToggleActive = (eventId: number | undefined | null, newIsActive: boolean) => {
@@ -82,10 +102,10 @@ export default function DashboardPage() {
   };
 
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading...</p>
+        <p>Loading Dashboard...</p>
       </div>
     );
   }
@@ -214,10 +234,16 @@ export default function DashboardPage() {
             </div>
           </>
         ) : (
-          <div className="w-full max-w-4xl text-center mx-auto">
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Select a Tenant</h1>
-            <p className="text-muted-foreground mb-8">Choose the tenant to start a new order.</p>
-            <TenantSelectionGrid />
+          // Cashier View
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 w-full">
+            <div className="lg:col-span-5">
+               <UnifiedProductView />
+            </div>
+            <div className="lg:col-span-2">
+              <Card className="sticky top-24">
+                <OrderSummary />
+              </Card>
+            </div>
           </div>
         )}
       </div>
@@ -229,6 +255,12 @@ export default function DashboardPage() {
         onOpenChange={setIsViewAllOpen}
         title={viewAllTitle}
         items={viewAllData}
+      />
+      <ConfirmTenantSwitchDialog />
+      <ReceiptDialog 
+        isOpen={isReceiptOpen}
+        onOpenChange={setReceiptOpen}
+        order={lastCompletedOrder}
       />
     </>
   );

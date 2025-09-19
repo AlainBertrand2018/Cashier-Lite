@@ -27,10 +27,17 @@ export default function TenantPage() {
   const tenant = getTenantById(parseInt(tenantId, 10));
 
   useEffect(() => {
+    // This page is now primarily for ADMIN management.
+    // Cashiers use the unified dashboard.
+    if (!activeAdmin) {
+      router.replace('/dashboard');
+      return;
+    }
+
     // Set the selected tenant in the store when the page loads
     fetchTenants();
     setSelectedTenantId(parseInt(tenantId, 10));
-  }, [tenantId, setSelectedTenantId, fetchTenants]);
+  }, [tenantId, setSelectedTenantId, fetchTenants, activeAdmin, router]);
 
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
@@ -39,6 +46,11 @@ export default function TenantPage() {
       router.push('/dashboard');
     }
   };
+  
+  // Render nothing if not an admin, as the useEffect will handle redirection.
+  if (!activeAdmin) {
+    return null;
+  }
 
   return (
     <>
@@ -64,11 +76,9 @@ export default function TenantPage() {
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-7">
+          <h2 className="text-2xl font-bold tracking-tight mb-4">Product Management</h2>
           <ProductGrid />
-        </div>
-        <div className="lg:col-span-2">
-          <OrderSummary />
         </div>
       </div>
        <ReceiptDialog 

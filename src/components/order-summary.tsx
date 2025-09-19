@@ -1,15 +1,14 @@
 
-
 'use client';
 
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function OrderSummary() {
   const { 
@@ -17,10 +16,19 @@ export default function OrderSummary() {
     updateProductQuantity, 
     removeProductFromOrder, 
     clearCurrentOrder,
-    completeOrder 
+    completeOrder,
+    getTenantById,
+    selectedTenantId,
   } = useStore();
   
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [tenantName, setTenantName] = useState('');
+
+  const tenant = getTenantById(selectedTenantId);
+
+  useEffect(() => {
+    setTenantName(tenant?.name || '');
+  }, [tenant]);
 
   const subtotal = currentOrder.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -38,14 +46,15 @@ export default function OrderSummary() {
   };
 
   return (
-    <Card className="sticky top-24 flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
       <CardHeader>
         <CardTitle>Current Order</CardTitle>
+        {tenantName && <p className="text-sm text-primary font-semibold">{tenantName}</p>}
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0">
         <ScrollArea className="h-full px-6">
           {currentOrder.length === 0 ? (
-            <p className="text-muted-foreground py-6">Select products to start an order.</p>
+            <p className="text-muted-foreground py-6 text-center">Select products to start an order.</p>
           ) : (
             <div className="space-y-4 py-6">
               {currentOrder.map((item) => (
@@ -113,6 +122,6 @@ export default function OrderSummary() {
           Clear Order
         </Button>
       </CardFooter>
-    </Card>
+    </div>
   );
 }

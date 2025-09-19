@@ -20,6 +20,8 @@ interface AppState {
   isReportingDone: boolean;
   activeShift: ActiveShift | null;
   activeAdmin: ActiveAdmin | null;
+  productForTenantSwitch: Product | null;
+
 
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
@@ -36,6 +38,8 @@ interface AppState {
 
 
   addProductToOrder: (product: Product) => void;
+  startNewOrderWithProduct: (product: Product) => void;
+  setProductForTenantSwitch: (product: Product | null) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
@@ -76,6 +80,8 @@ export const useStore = create<AppState>()(
       isReportingDone: false,
       activeShift: null,
       activeAdmin: null,
+      productForTenantSwitch: null,
+
 
       fetchTenants: async (force = false) => {
         if (!supabase) {
@@ -306,16 +312,23 @@ export const useStore = create<AppState>()(
       },
 
       setSelectedTenantId: (tenantId: number | null) => {
-        if (get().selectedTenantId !== tenantId) {
-          set({ currentOrder: [], products: [] }); 
-        }
-        set({ selectedTenantId: tenantId });
-        if (tenantId) {
-            get().fetchProducts(tenantId);
-        } else {
-            if (get().activeAdmin) {
+        // Admins can set this freely for management tasks.
+        // For cashiers, this is derived from the current order.
+        const { activeAdmin } = get();
+        if (activeAdmin) {
+            if (get().selectedTenantId !== tenantId) {
+                set({ products: [] }); 
+            }
+            set({ selectedTenantId: tenantId });
+            if (tenantId) {
+                get().fetchProducts(tenantId);
+            } else {
                 get().fetchAllProducts();
             }
+        }
+        // For cashiers, this state is now a reflection of the order, not a manual selection.
+        else {
+           set({ selectedTenantId: tenantId });
         }
       },
 
@@ -325,7 +338,6 @@ export const useStore = create<AppState>()(
           currentOrder: [],
           selectedTenantId: null,
           lastCompletedOrder: null,
-          products: [],
         });
       },
 
@@ -339,17 +351,17 @@ export const useStore = create<AppState>()(
         
         if (product.stock <= 0) {
             console.warn(`Product "${product.name}" is out of stock.`);
-            // Optionally, add a user-facing notification here (toast)
             return;
         }
 
-        if (currentOrder.length > 0 && currentOrder[0].tenant_id !== product.tenant_id) {
-          console.error("Cannot add products from different tenants to the same order.");
-          return;
-        }
-         if (selectedTenantId !== product.tenant_id) {
-            console.error("Product does not belong to the selected tenant.");
-            return;
+        // If order is empty, this product's tenant becomes the selected tenant.
+        if (currentOrder.length === 0) {
+          set({ selectedTenantId: product.tenant_id });
+        } 
+        // If product from a different tenant is added, trigger confirmation flow.
+        else if (selectedTenantId !== product.tenant_id) {
+          set({ productForTenantSwitch: product });
+          return; 
         }
 
         const existingItem = currentOrder.find((item) => item.id === product.id);
@@ -372,13 +384,32 @@ export const useStore = create<AppState>()(
           }] });
         }
       },
+      
+      startNewOrderWithProduct: (product) => {
+        get().clearCurrentOrder();
+        set({ 
+            selectedTenantId: product.tenant_id,
+            currentOrder: [{
+                id: product.id,
+                name: product.name,
+                price: product.selling_price,
+                quantity: 1,
+                tenant_id: product.tenant_id,
+            }]
+        });
+        get().setProductForTenantSwitch(null);
+      },
+
+      setProductForTenantSwitch: (product) => {
+        set({ productForTenantSwitch: product });
+      },
 
       removeProductFromOrder: (productId) => {
-        set({
-          currentOrder: get().currentOrder.filter(
-            (item) => item.id !== productId
-          ),
-        });
+        const newOrder = get().currentOrder.filter((item) => item.id !== productId);
+        set({ currentOrder: newOrder });
+        if (newOrder.length === 0) {
+            set({ selectedTenantId: null });
+        }
       },
 
       updateProductQuantity: (productId, quantity) => {
@@ -394,7 +425,7 @@ export const useStore = create<AppState>()(
       },
 
       clearCurrentOrder: () => {
-        set({ currentOrder: [] });
+        set({ currentOrder: [], selectedTenantId: null });
       },
 
       clearCompletedOrders: () => {
@@ -407,7 +438,7 @@ export const useStore = create<AppState>()(
       },
       
       completeOrder: async () => {
-        const { currentOrder, selectedTenantId, activeShift, fetchProducts } = get();
+        const { currentOrder, selectedTenantId, activeShift, fetchAllProducts } = get();
         if (currentOrder.length === 0 || !selectedTenantId || !activeShift) return;
 
         const subtotal = currentOrder.reduce(
@@ -429,7 +460,6 @@ export const useStore = create<AppState>()(
           createdAt: Date.now(),
         };
 
-        // --- Real-time Stock Deduction ---
         if (supabase) {
           for (const item of newOrder.items) {
             const { error: decrementError } = await supabase.rpc('decrement_product_stock', {
@@ -438,15 +468,10 @@ export const useStore = create<AppState>()(
             });
             if (decrementError) {
               console.error(`Failed to decrement stock for product ${item.id}:`, decrementError);
-              // Decide on error handling: proceed with order anyway, or fail?
-              // For now, we log the error and continue.
             }
           }
-           // After decrementing, refetch products to update UI stock levels
-           await fetchProducts(selectedTenantId);
+           await fetchAllProducts();
         }
-        // --- End Stock Deduction ---
-
 
         let isSynced = false;
         if (supabase) {
@@ -490,6 +515,7 @@ export const useStore = create<AppState>()(
           completedOrders: [...state.completedOrders, finalOrder],
           lastCompletedOrder: finalOrder,
           currentOrder: [],
+          selectedTenantId: null,
         }));
       },
 
@@ -528,7 +554,6 @@ export const useStore = create<AppState>()(
           return;
         }
 
-        // First, delete all products associated with the tenant
         const { error: productError } = await supabase
           .from('products')
           .delete()
@@ -536,10 +561,9 @@ export const useStore = create<AppState>()(
 
         if (productError) {
           console.error(`Error deleting products for tenant ${tenantId}:`, productError);
-          return; // Stop execution if products can't be deleted
+          return;
         }
 
-        // Then, delete the tenant
         const { error: tenantError } = await supabase
           .from('tenants')
           .delete()
@@ -550,7 +574,6 @@ export const useStore = create<AppState>()(
           return;
         }
 
-        // Refresh the tenants list in the store
         await get().fetchTenants(true);
       },
       
@@ -577,7 +600,7 @@ export const useStore = create<AppState>()(
         }
         
         if(data) {
-           await get().fetchProducts(data.tenant_id);
+           await get().fetchAllProducts(); // Refresh all products after adding
         }
 
         return data;
@@ -590,7 +613,6 @@ export const useStore = create<AppState>()(
         }
 
         const dataToUpdate = { ...productData };
-        // If stock is being manually set, reset initial_stock as well.
         if (productData.stock !== undefined) {
             (dataToUpdate as Product).initial_stock = productData.stock;
         }
@@ -609,7 +631,7 @@ export const useStore = create<AppState>()(
         }
         
         if (data) {
-           await get().fetchProducts(data.tenant_id);
+           await get().fetchAllProducts(); // Refresh all products after editing
         }
       },
 
@@ -627,15 +649,11 @@ export const useStore = create<AppState>()(
             return;
         }
 
-        const product = get().products.find(p => p.id === productId);
-        if (product) {
-            await get().fetchProducts(product.tenant_id);
-        }
+        await get().fetchAllProducts();
       },
 
       deleteProduct: async (productId: string) => {
-        const { products } = get();
-        const productToDelete = products.find(p => p.id === productId);
+        const productToDelete = get().products.find(p => p.id === productId);
 
         if (!productToDelete || !supabase) {
             console.error('Product not found or Supabase not configured.');
@@ -648,7 +666,7 @@ export const useStore = create<AppState>()(
             console.error('Error deleting product:', error);
             return;
         }
-        await get().fetchProducts(productToDelete.tenant_id);
+        await get().fetchAllProducts();
       },
 
       addCashier: async (name, pin) => {
@@ -664,7 +682,6 @@ export const useStore = create<AppState>()(
           return false;
         }
 
-        // Force a refresh of the cashiers list
         await get().fetchCashiers(true);
         return true;
       },
@@ -712,7 +729,6 @@ export const useStore = create<AppState>()(
 
         if (itemsError) {
            console.error('Error syncing order items:', itemsError);
-          // Don't mark as synced if items fail
           return { success: false, syncedCount: 0, error: itemsError };
         }
         
@@ -736,7 +752,7 @@ export const useStore = create<AppState>()(
           console.error('Error creating event:', error);
           return false;
         }
-        await get().fetchEvents(true); // Force refresh
+        await get().fetchEvents(true); 
         return true;
       },
 
@@ -750,7 +766,7 @@ export const useStore = create<AppState>()(
             console.error('Error setting active event:', JSON.stringify(error, null, 2));
             return;
         }
-        await get().fetchEvents(true); // Force refresh to get the latest active state
+        await get().fetchEvents(true);
       },
 
     }),
