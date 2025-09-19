@@ -23,11 +23,13 @@ export default function EventManagementCard() {
     loadEvents();
   }, [fetchEvents]);
 
-  const handleToggleActive = (eventId: number, newIsActive: boolean) => {
+  const handleToggleActive = (eventId: number | undefined | null, newIsActive: boolean) => {
     // We only trigger the update if we are activating an event.
     // The deactivation of others is handled by the database function.
-    if (newIsActive) {
+    if (newIsActive && eventId) {
       setActiveEvent(eventId);
+    } else if (!eventId) {
+        console.warn("Tried to set an active event with an invalid ID:", eventId);
     }
   };
 

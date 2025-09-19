@@ -283,9 +283,7 @@ export const useStore = create<AppState>()(
       },
 
       getActiveEvent: () => {
-        const { activeShift, events } = get();
-        if (!activeShift?.eventId) return undefined;
-        return events.find(e => e.id === activeShift.eventId);
+        return get().activeEvent || undefined;
       },
 
       setSelectedTenantId: (tenantId: number | null) => {
