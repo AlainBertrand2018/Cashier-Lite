@@ -103,7 +103,7 @@ export default function AppHeader() {
                 href="/dashboard"
                 className="flex items-center gap-2 text-lg font-semibold mb-4"
               >
-                <Image src="/images/logo_1024.png" alt="FIDS Cashier Lite Logo" width={24} height={24} />
+                <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={24} height={24} />
                 <span>FIDS Cashier Lite</span>
               </Link>
               <NavigationLinks />
@@ -118,7 +118,7 @@ export default function AppHeader() {
 
       {/* Desktop Navigation */}
       <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-        <Image src="/images/logo_1024.png" alt="FIDS Cashier Lite Logo" width={24} height={24} />
+        <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={24} height={24} />
         <span className="hidden md:inline-block">FIDS Cashier Lite</span>
       </Link>
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6 ml-6">

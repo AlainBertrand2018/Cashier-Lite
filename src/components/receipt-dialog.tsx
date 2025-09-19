@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Printer, RefreshCw } from 'lucide-react';
 import type { Event, Order, Tenant } from '@/lib/types';
-import { Logo } from './icons';
+import Image from 'next/image';
 import { useStore } from '@/lib/store';
 import { useEffect } from 'react';
 import { format } from 'date-fns';
@@ -160,7 +160,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
 
               <div className="receipt-instance">
                 <DialogHeader className="items-center text-center">
-                  <Logo className="h-10 w-10 text-primary mb-2" />
+                  <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
                   <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
                   <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
                 </DialogHeader>
@@ -174,7 +174,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
 
               <div className="receipt-instance">
                 <DialogHeader className="items-center text-center">
-                  <Logo className="h-10 w-10 text-primary mb-2" />
+                   <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
                   <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
                   <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
                 </DialogHeader>
