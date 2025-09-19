@@ -121,7 +121,7 @@ export const useStore = create<AppState>()(
       
       startShift: async (cashierId: string, pin: string, floatAmount: number) => {
         if (!supabase) {
-          console.error('Supabase not configured');
+          console.error('Supabase not configured, cannot start shift.');
           return false;
         }
         const { data: cashier, error } = await supabase
