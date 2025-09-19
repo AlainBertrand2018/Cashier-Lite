@@ -3,22 +3,79 @@
 
 import AddCashierDialog from '@/components/add-cashier-dialog';
 import CreateEventDialog from '@/components/create-event-dialog';
-import EventManagementCard from '@/components/event-management-card';
 import TenantSelectionGrid from '@/components/tenant-selection-grid';
-import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
-import { CalendarPlus, PlusCircle } from 'lucide-react';
+import { Building, Calendar, DollarSign, PlusCircle, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { Cashier, Event, Product, Tenant } from '@/lib/types';
+import AddTenantDialog from '@/components/add-tenant-dialog';
+import ManagementCard from '@/components/management-card';
+import { Button } from '@/components/ui/button';
+import ViewAllDialog from '@/components/view-all-dialog';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const { activeAdmin, setSelectedTenantId } = useStore();
+  const { 
+    activeAdmin, 
+    setSelectedTenantId,
+    events,
+    tenants,
+    cashiers,
+    products,
+    fetchEvents,
+    fetchTenants,
+    fetchCashiers,
+    fetchAllProducts,
+  } = useStore();
+  
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Dialog states
   const [isAddCashierOpen, setIsAddCashierOpen] = useState(false);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
 
-  // This effect resets the selected tenant when the user navigates back to the dashboard.
+  // View All Dialog states
+  const [viewAllTitle, setViewAllTitle] = useState('');
+  const [viewAllData, setViewAllData] = useState<any[]>([]);
+  const [isViewAllOpen, setIsViewAllOpen] = useState(false);
+
+
   useEffect(() => {
+    setIsClient(true);
     setSelectedTenantId(null);
-  }, [setSelectedTenantId]);
+    if (activeAdmin) {
+      const loadAdminData = async () => {
+        setIsLoading(true);
+        await Promise.all([
+          fetchEvents(true),
+          fetchTenants(true),
+          fetchCashiers(true),
+          fetchAllProducts(),
+        ]);
+        setIsLoading(false);
+      };
+      loadAdminData();
+    }
+  }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts]);
+
+  const handleViewAll = (title: string, data: any[], renderItem: (item: any) => React.ReactNode) => {
+    setViewAllTitle(title);
+    setViewAllData(data.map(item => ({ key: item.id || item.tenant_id, content: renderItem(item) })));
+    setIsViewAllOpen(true);
+  };
+
+
+  if (!isClient) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -28,24 +85,107 @@ export default function DashboardPage() {
             <div className="w-full">
                <div className="flex justify-start items-center mb-2 gap-4">
                   <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-                  <Button variant="outline" onClick={() => setIsAddCashierOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Cashier
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsCreateEventOpen(true)}>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    Create Event
-                  </Button>
                 </div>
                 <p className="text-muted-foreground">Manage events, tenants, and cashiers.</p>
             </div>
-            <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <EventManagementCard />
-              <div className="lg:col-span-1">
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              {/* Event Management Card */}
+              <ManagementCard
+                title="Events"
+                description={`${events.length} total events`}
+                icon={<Calendar />}
+                actionButton={
+                  <Button variant="outline" size="sm" onClick={() => setIsCreateEventOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create Event
+                  </Button>
+                }
+                onViewAll={() => handleViewAll('All Events', events, (item: Event) => 
+                  <div className="flex justify-between items-center">
+                    <span>{item.name}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(item.start_date).toLocaleDateString()} - {new Date(item.end_date).toLocaleDateString()}</span>
+                  </div>
+                )}
+                isLoading={isLoading}
+              >
+                {events.slice(0, 3).map(event => (
+                  <li key={event.id} className="text-sm text-muted-foreground">{event.name}</li>
+                ))}
+              </ManagementCard>
+              
+              {/* Tenant Management Card */}
+              <ManagementCard
+                title="Tenants"
+                description={`${tenants.length} total tenants`}
+                icon={<Building />}
+                actionButton={
+                  <Button variant="outline" size="sm" onClick={() => setIsAddTenantOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Tenant
+                  </Button>
+                }
+                 onViewAll={() => handleViewAll('All Tenants', tenants, (item: Tenant) => 
+                  <div className="flex justify-between items-center">
+                    <span>{item.name}</span>
+                    <span className="text-xs text-muted-foreground">ID: {item.tenant_id}</span>
+                  </div>
+                )}
+                isLoading={isLoading}
+              >
+                {tenants.slice(0, 3).map(tenant => (
+                  <li key={tenant.tenant_id} className="text-sm text-muted-foreground">{tenant.name}</li>
+                ))}
+              </ManagementCard>
+              
+              {/* Product Management Card */}
+              <ManagementCard
+                title="Products"
+                description={`${products.length} total products`}
+                icon={<DollarSign />}
+                actionButton={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="#tenant-grid">
+                      Add Product
+                    </Link>
+                  </Button>
+                }
+                 onViewAll={() => handleViewAll('All Products', products, (item: Product) => 
+                  <div className="flex justify-between items-center">
+                    <span>{item.name}</span>
+                    <span className="text-xs text-muted-foreground">Rs {item.selling_price.toFixed(2)}</span>
+                  </div>
+                )}
+                isLoading={isLoading}
+              >
+                 {products.slice(0, 3).map(product => (
+                  <li key={product.id} className="text-sm text-muted-foreground">{product.name}</li>
+                ))}
+              </ManagementCard>
+              
+              {/* Cashier Management Card */}
+              <ManagementCard
+                title="Cashiers"
+                description={`${cashiers.length} total cashiers`}
+                icon={<Users />}
+                actionButton={
+                  <Button variant="outline" size="sm" onClick={() => setIsAddCashierOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Cashier
+                  </Button>
+                }
+                 onViewAll={() => handleViewAll('All Cashiers', cashiers, (item: Cashier) => 
+                  <div className="flex justify-between items-center">
+                    <span>{item.name}</span>
+                  </div>
+                )}
+                isLoading={isLoading}
+              >
+                 {cashiers.slice(0, 3).map(cashier => (
+                  <li key={cashier.id} className="text-sm text-muted-foreground">{cashier.name}</li>
+                ))}
+              </ManagementCard>
+            </div>
+            <div id="tenant-grid" className="w-full">
                 <h2 className="text-2xl font-bold tracking-tight mb-2">Tenant Management</h2>
                 <p className="text-muted-foreground mb-4">Select a tenant to manage their products.</p>
                 <TenantSelectionGrid />
-              </div>
             </div>
           </>
         ) : (
@@ -58,6 +198,13 @@ export default function DashboardPage() {
       </div>
       <AddCashierDialog isOpen={isAddCashierOpen} onOpenChange={setIsAddCashierOpen} />
       <CreateEventDialog isOpen={isCreateEventOpen} onOpenChange={setIsCreateEventOpen} />
+      <AddTenantDialog isOpen={isAddTenantOpen} onOpenChange={setIsAddTenantOpen} />
+       <ViewAllDialog 
+        isOpen={isViewAllOpen}
+        onOpenChange={setIsViewAllOpen}
+        title={viewAllTitle}
+        items={viewAllData}
+      />
     </>
   );
 }

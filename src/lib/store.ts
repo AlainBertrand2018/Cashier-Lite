@@ -23,6 +23,7 @@ interface AppState {
 
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
+  fetchAllProducts: () => Promise<void>;
   fetchProductTypes: () => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
   fetchEvents: (force?: boolean) => Promise<void>;
@@ -116,6 +117,24 @@ export const useStore = create<AppState>()(
 
         if (error) {
           console.error(`Error fetching products for tenant ${tenantId}:`, error);
+          set({ products: [] });
+          return;
+        }
+        set({ products: data || [] });
+      },
+
+      fetchAllProducts: async () => {
+        if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchAllProducts.");
+          set({ products: [] });
+          return;
+        }
+         const { data, error } = await supabase
+          .from('products')
+          .select('*');
+
+        if (error) {
+          console.error(`Error fetching all products:`, error);
           set({ products: [] });
           return;
         }
@@ -293,6 +312,10 @@ export const useStore = create<AppState>()(
         set({ selectedTenantId: tenantId });
         if (tenantId) {
             get().fetchProducts(tenantId);
+        } else {
+            if (get().activeAdmin) {
+                get().fetchAllProducts();
+            }
         }
       },
 
