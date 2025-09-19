@@ -22,16 +22,16 @@ import { useState } from 'react';
 import { Eraser } from 'lucide-react';
 
 export default function LoginPage() {
-  const { activeShift, isReportingDone, clearCompletedOrders, completedOrders } = useStore();
+  const { activeShift, activeAdmin, isReportingDone, clearCompletedOrders, completedOrders } = useStore();
   const router = useRouter();
   const { toast } = useToast();
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (activeShift) {
+    if (activeShift || activeAdmin) {
       router.replace('/dashboard');
     }
-  }, [activeShift, router]);
+  }, [activeShift, activeAdmin, router]);
 
   const handleResetShift = () => {
     clearCompletedOrders();
@@ -43,7 +43,7 @@ export default function LoginPage() {
   };
   
   // Don't render anything until the check is complete to avoid flicker
-  if (activeShift) {
+  if (activeShift || activeAdmin) {
     return null;
   }
 
@@ -53,8 +53,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
             <div className="text-center">
                 <Logo className="mx-auto h-16 w-16 text-primary mb-4" />
-                <h1 className="text-3xl font-bold tracking-tight">FIDS Cashier Lite</h1>
-                <p className="text-muted-foreground">Please start a new shift to continue.</p>
+                <h1 className="text-3xl font-bold tracking-tight">Cashier Lite</h1>
+                <p className="text-muted-foreground">Revenue Sharing Cashing and Reporting System</p>
             </div>
 
             <LoginForm />

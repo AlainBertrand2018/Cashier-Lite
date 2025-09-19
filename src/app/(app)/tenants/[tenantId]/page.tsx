@@ -16,6 +16,7 @@ export default function TenantPage() {
   const router = useRouter();
   const tenantId = params.tenantId as string;
   const { 
+    activeAdmin,
     setSelectedTenantId, 
     lastCompletedOrder,
     resetToTenantSelection,
@@ -60,12 +61,14 @@ export default function TenantPage() {
             {tenantName}
           </h1>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/tenants/${tenantId}/manage`}>
-            <Settings className="mr-2 h-4 w-4" />
-            Manage Products
-          </Link>
-        </Button>
+        {activeAdmin && (
+          <Button asChild variant="outline">
+            <Link href={`/tenants/${tenantId}/manage`}>
+              <Settings className="mr-2 h-4 w-4" />
+              Manage Products
+            </Link>
+          </Button>
+        )}
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-5">

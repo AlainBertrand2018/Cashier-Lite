@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 
 function HeaderNavigation() {
   const [isClient, setIsClient] = useState(false);
-  const { activeShift, logoutShift } = useStore();
+  const { activeShift, activeAdmin, logoutShift, adminLogout } = useStore();
   const router = useRouter();
   
   useEffect(() => {
@@ -24,12 +24,17 @@ function HeaderNavigation() {
   const pathname = usePathname();
   
   const navLinks = [
-    { href: '/dashboard', label: 'New Order', icon: LayoutDashboard },
-    { href: '/reports', label: 'End of Shift Ventilation', icon: BookOpen },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/reports', label: 'Reports', icon: BookOpen },
   ];
   
   const handleLogout = () => {
-    logoutShift();
+    if (activeShift) {
+      logoutShift();
+    }
+    if (activeAdmin) {
+      adminLogout();
+    }
     router.push('/');
   }
 
@@ -42,7 +47,10 @@ function HeaderNavigation() {
       <TooltipProvider>
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = pathname.startsWith(link.href) && (link.href !== '/dashboard' || pathname === '/dashboard');
+            // Don't show reports link if admin is logged in
+            if (activeAdmin && link.href === '/reports') return null;
+
             return (
               <Link
                 key={link.href}
@@ -60,13 +68,11 @@ function HeaderNavigation() {
         </nav>
       </TooltipProvider>
       <div className="ml-auto flex items-center gap-4">
-        {activeShift && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <UserCircle className="h-5 w-5" />
-            <span>{activeShift.cashierName}</span>
-          </div>
-        )}
-         <Button variant="ghost" size="icon" onClick={handleLogout} title="End Shift & Logout">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <UserCircle className="h-5 w-5" />
+          <span>{activeShift?.cashierName || activeAdmin?.email}</span>
+        </div>
+         <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
             <LogOut className="h-4 w-4" />
          </Button>
       </div>

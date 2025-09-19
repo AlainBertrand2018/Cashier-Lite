@@ -50,3 +50,7 @@ export interface ActiveShift {
     floatAmount: number;
     startTime: string;
 }
+
+export interface ActiveAdmin {
+    email: string;
+}

@@ -11,8 +11,11 @@ import type { Tenant } from '@/lib/types';
 import { Skeleton } from './ui/skeleton';
 
 function TenantCard({ tenant }: { tenant: Tenant }) {
+  const { activeAdmin } = useStore();
+  const href = activeAdmin ? `/tenants/${tenant.tenant_id}/manage` : `/tenants/${tenant.tenant_id}`;
+  
   return (
-    <Link href={`/tenants/${tenant.tenant_id}`} passHref>
+    <Link href={href} passHref>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
         <CardContent className="flex flex-col items-center justify-center text-center p-4 flex-grow">
           <div className="text-7xl font-extrabold tracking-tighter mb-4">{tenant.tenant_id}</div>
@@ -43,7 +46,7 @@ function TenantGridSkeleton() {
 }
 
 export default function TenantSelectionGrid() {
-  const {tenants, fetchTenants} = useStore((state) => ({tenants: state.tenants, fetchTenants: state.fetchTenants}));
+  const {tenants, fetchTenants, activeAdmin} = useStore();
   const [isAddTenantOpen, setAddTenantOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,15 +63,11 @@ export default function TenantSelectionGrid() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-4xl text-center">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Select a Tenant</h1>
-          <p className="text-muted-foreground mb-8">Choose the tenant to start a new order, or add a new one.</p>
-          {isLoading ? <TenantGridSkeleton /> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {sortedTenants.map((tenant) => (
-                  <TenantCard key={tenant.tenant_id} tenant={tenant} />
-                ))}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {isLoading ? <TenantGridSkeleton /> : sortedTenants.map((tenant) => (
+              <TenantCard key={tenant.tenant_id} tenant={tenant} />
+            ))}
+            {activeAdmin && !isLoading && (
                 <Card
                 onClick={() => setAddTenantOpen(true)}
                 className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary min-h-[180px]"
@@ -78,10 +77,8 @@ export default function TenantSelectionGrid() {
                     <div className="text-lg font-semibold">Add Tenant</div>
                 </CardContent>
                 </Card>
-            </div>
-          )}
+            )}
         </div>
-      </div>
       <AddTenantDialog isOpen={isAddTenantOpen} onOpenChange={setAddTenantOpen} />
     </>
   );

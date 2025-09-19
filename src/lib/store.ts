@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
@@ -17,6 +17,7 @@ interface AppState {
   selectedTenantId: number | null;
   isReportingDone: boolean;
   activeShift: ActiveShift | null;
+  activeAdmin: ActiveAdmin | null;
 
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
@@ -24,6 +25,9 @@ interface AppState {
 
   startShift: (cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
   logoutShift: () => void;
+  adminLogin: (email: string, password: string) => Promise<boolean>;
+  adminLogout: () => void;
+
 
   addProductToOrder: (product: Product) => void;
   removeProductFromOrder: (productId: string) => void;
@@ -56,6 +60,7 @@ export const useStore = create<AppState>()(
       selectedTenantId: null,
       isReportingDone: false,
       activeShift: null,
+      activeAdmin: null,
 
       fetchTenants: async (force = false) => {
         if (!supabase) {
@@ -163,6 +168,7 @@ export const useStore = create<AppState>()(
                 floatAmount: floatAmount,
                 startTime: new Date().toISOString(),
             },
+            activeAdmin: null,
             selectedTenantId: null,
             currentOrder: [],
          });
@@ -170,8 +176,26 @@ export const useStore = create<AppState>()(
       },
       
       logoutShift: () => {
-          // Here you could also update the cashing_station record to set cashier_id to null
           set({ activeShift: null });
+      },
+
+      adminLogin: async (email, password) => {
+        // In a real app, you'd verify against a database.
+        // For this demo, we use hardcoded credentials.
+        if (email === 'admin@fids.mu' && password === 'fidsadmin') {
+            set({
+                activeAdmin: { email },
+                activeShift: null,
+                selectedTenantId: null,
+                currentOrder: [],
+            });
+            return true;
+        }
+        return false;
+      },
+
+      adminLogout: () => {
+        set({ activeAdmin: null });
       },
 
       getTenantById: (tenantId: number | null) => {
@@ -200,8 +224,13 @@ export const useStore = create<AppState>()(
       },
 
       addProductToOrder: (product) => {
-        const { currentOrder, selectedTenantId } = get();
+        const { currentOrder, selectedTenantId, activeAdmin } = get();
         
+        if (activeAdmin) {
+            console.log("Admin cannot add products to order.");
+            return;
+        }
+
         if (currentOrder.length > 0 && currentOrder[0].tenant_id !== product.tenant_id) {
           console.error("Cannot add products from different tenants to the same order.");
           return;
@@ -252,7 +281,7 @@ export const useStore = create<AppState>()(
 
       clearCompletedOrders: () => {
         // This is now for clearing the *previous* shift's data.
-        set({ completedOrders: [], isReportingDone: false });
+        set({ completedOrders: [], isReportingDone: false, activeShift: null, activeAdmin: null });
       },
       
       setLastCompletedOrder: (order: Order | null) => {
@@ -512,6 +541,7 @@ export const useStore = create<AppState>()(
         completedOrders: state.completedOrders,
         cashiers: state.cashiers,
         activeShift: state.activeShift,
+        activeAdmin: state.activeAdmin,
         isReportingDone: state.isReportingDone,
       }),
     }

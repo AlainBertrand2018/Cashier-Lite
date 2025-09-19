@@ -9,12 +9,12 @@ import AddProductDialog from './add-product-dialog';
 import { Skeleton } from './ui/skeleton';
 
 function ProductCard({ product }: { product: Product }) {
-  const addProductToOrder = useStore((state) => state.addProductToOrder);
+  const { addProductToOrder, activeAdmin } = useStore();
 
   return (
     <Card 
       className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer"
-      onClick={() => addProductToOrder(product)}
+      onClick={() => !activeAdmin && addProductToOrder(product)}
     >
       <CardContent className="flex-grow p-4 flex flex-col justify-center items-center text-center">
         <p className="text-lg font-semibold">{product.name}</p>
@@ -40,7 +40,7 @@ function ProductGridSkeleton() {
 }
 
 export default function ProductGrid() {
-  const { products, selectedTenantId, fetchProducts } = useStore();
+  const { products, selectedTenantId, fetchProducts, activeAdmin } = useStore();
   const [isAddProductOpen, setAddProductOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -71,15 +71,17 @@ export default function ProductGrid() {
         {tenantProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
-        <Card
-          onClick={() => setAddProductOpen(true)}
-          className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary min-h-[128px]"
-        >
-          <CardHeader className="flex flex-col items-center justify-center text-center p-4">
-            <PlusCircle className="h-10 w-10 mb-2" />
-            <CardTitle className="text-lg font-semibold">Add Product</CardTitle>
-          </CardHeader>
-        </Card>
+        {activeAdmin && (
+            <Card
+                onClick={() => setAddProductOpen(true)}
+                className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary min-h-[128px]"
+            >
+                <CardHeader className="flex flex-col items-center justify-center text-center p-4">
+                    <PlusCircle className="h-10 w-10 mb-2" />
+                    <CardTitle className="text-lg font-semibold">Add Product</CardTitle>
+                </CardHeader>
+            </Card>
+        )}
       </div>
       <AddProductDialog 
         isOpen={isAddProductOpen}

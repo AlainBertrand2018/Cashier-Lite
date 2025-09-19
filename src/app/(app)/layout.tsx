@@ -12,22 +12,22 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [isShiftChecked, setIsShiftChecked] = useState(false);
+  const [isSessionChecked, setIsSessionChecked] = useState(false);
 
   useEffect(() => {
     // Access the store only on the client-side within useEffect
-    const { activeShift } = useStore.getState();
+    const { activeShift, activeAdmin } = useStore.getState();
     
-    // Check if there's an active shift. If not, redirect to the login page.
-    if (!activeShift) {
+    // Check if there's an active session (either shift or admin). If not, redirect to the login page.
+    if (!activeShift && !activeAdmin) {
       router.replace('/');
     } else {
-      setIsShiftChecked(true);
+      setIsSessionChecked(true);
     }
   }, [router]);
 
-  // Render a loading state or nothing until the shift check is complete
-  if (!isShiftChecked) {
+  // Render a loading state or nothing until the session check is complete
+  if (!isSessionChecked) {
     return (
        <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
