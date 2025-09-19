@@ -3,13 +3,10 @@
 
 import type { Order, Tenant } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, DollarSign, Hash, Printer } from 'lucide-react';
-import { ScrollArea } from './ui/scroll-area';
-import { Badge } from './ui/badge';
-import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DollarSign, Hash } from 'lucide-react';
 import React from 'react';
+import { Badge } from './ui/badge';
 
 interface TenantReportProps {
   tenant: Tenant;
@@ -18,38 +15,14 @@ interface TenantReportProps {
 
 export default function TenantReport({ tenant, orders }: TenantReportProps) {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const totalVat = orders.reduce((sum, order) => sum + order.vat, 0);
   const tenantShare = totalRevenue * 0.7;
   const organizerShare = totalRevenue * 0.3;
-
-  const handlePrint = () => {
-    window.print();
-  };
   
   const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div id="tenant-report-content" className="space-y-8 p-4 bg-background">
-        <style>
-            {`
-            @media print {
-                body {
-                background-color: white;
-                }
-                .print\\:hidden {
-                display: none;
-                }
-                .no-print-break {
-                    page-break-inside: avoid;
-                }
-            }
-            `}
-        </style>
-        <div className="print:block hidden text-center mb-8">
-            <h1 className="text-2xl font-bold">{tenant.name} - Sales Report</h1>
-            <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleDateString()}</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 no-print-break">
+    <div className="space-y-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -88,7 +61,7 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
             </Card>
         </div>
 
-        <Card className="no-print-break">
+        <Card>
             <CardHeader>
             <CardTitle>All Orders</CardTitle>
             <CardDescription>
@@ -108,7 +81,7 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                   <TableBody>
                       {sortedOrders.length > 0 ? sortedOrders.map((order) => (
                           <React.Fragment key={order.id}>
-                            <TableRow className="bg-muted/50 hover:bg-muted/80 no-print-break">
+                            <TableRow className="bg-muted/50 hover:bg-muted/80">
                                 <TableCell className="font-medium">
                                     <div className="font-mono text-xs">ID: {order.id.split('-')[1]}</div>
                                     <div className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleString()}</div>
@@ -118,11 +91,8 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                                         {order.synced ? 'Synced' : 'Local'}
                                     </Badge>
                                 </TableCell>
-                                <TableCell></TableCell> 
-                                <TableCell className="text-right font-bold">
-                                    <div>Rs {order.total.toFixed(2)}</div>
-                                    <div className="text-xs font-normal text-muted-foreground">(VAT: Rs {order.vat.toFixed(2)})</div>
-                                </TableCell>
+                                <TableCell></TableCell> {/* Empty cell for alignment */}
+                                <TableCell className="text-right font-bold">Rs {order.total.toFixed(2)}</TableCell>
                             </TableRow>
                              {order.items.map((item) => (
                                 <TableRow key={item.id} className="text-sm">
@@ -141,15 +111,6 @@ export default function TenantReport({ tenant, orders }: TenantReportProps) {
                         </TableRow>
                       )}
                   </TableBody>
-                   <TableFooter>
-                    <TableRow className="bg-muted/80 hover:bg-muted/80 font-bold no-print-break">
-                        <TableCell colSpan={3} className="text-right">Grand Total</TableCell>
-                        <TableCell className="text-right font-mono">
-                           <div>Rs {totalRevenue.toFixed(2)}</div>
-                           <div className="text-xs font-normal text-muted-foreground">(VAT PAYABLE: Rs {totalVat.toFixed(2)})</div>
-                        </TableCell>
-                    </TableRow>
-                  </TableFooter>
                 </Table>
             </CardContent>
         </Card>

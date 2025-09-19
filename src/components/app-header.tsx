@@ -48,9 +48,7 @@ function HeaderNavigation() {
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           {navLinks.map((link) => {
             const isActive = pathname.startsWith(link.href) && (link.href !== '/dashboard' || pathname === '/dashboard');
-            // Don't show reports link if admin is logged in
-            if (activeAdmin && link.href === '/reports') return null;
-
+            
             return (
               <Link
                 key={link.href}
