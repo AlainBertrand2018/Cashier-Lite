@@ -146,6 +146,24 @@ export default function LoginForm() {
     }
   }
 
+  // Filter events to show only current and future ones for cashiers
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => {
+    // This ensures the date is only calculated on the client-side
+    const date = new Date();
+    date.setHours(0, 0, 0, 0); // Normalize to the beginning of the day
+    setToday(date);
+  }, []);
+
+  const filteredEvents = today 
+    ? events.filter((event: Event) => {
+        // Parse date string as YYYY-MM-DD to avoid timezone issues
+        const [year, month, day] = event.end_date.split('-').map(Number);
+        const eventEndDate = new Date(year, month - 1, day);
+        return eventEndDate >= today;
+      })
+    : [];
+
 
   return (
     <Card>
@@ -171,7 +189,7 @@ export default function LoginForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {events.map((event: Event) => (
+                          {filteredEvents.map((event: Event) => (
                             <SelectItem key={event.id} value={String(event.id)}>
                               {event.name}
                             </SelectItem>
