@@ -137,7 +137,7 @@ export default function UnifiedProductView() {
                 </div>
                 <Button variant="outline" onClick={() => setSelectedTypeId(null)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Add New Product to Order
+                    Back to Categories
                 </Button>
                 </CardHeader>
             </Card>
