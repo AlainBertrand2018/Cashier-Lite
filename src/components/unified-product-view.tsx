@@ -2,7 +2,7 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { Product, ProductType } from '@/lib/types';
+import type { Product, ProductType } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -13,8 +13,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, Box } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
+import Image from 'next/image';
 
 function ProductCard({ product }: { product: Product }) {
   const { addProductToOrder } = useStore();
@@ -54,7 +55,13 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
       onClick={onSelect}
     >
         <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center gap-4">
-            <Box className="w-12 h-12 text-muted-foreground" />
+            <Image 
+              src="/images/foodstuff.svg" 
+              alt={category.name}
+              width={48} 
+              height={48} 
+              className="text-muted-foreground"
+            />
             <p className="text-lg font-semibold">{category.name}</p>
         </CardContent>
     </Card>
