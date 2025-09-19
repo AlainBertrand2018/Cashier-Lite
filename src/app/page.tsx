@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/login-form';
-import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import { Eraser } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { activeShift, activeAdmin, isReportingDone, clearCompletedOrders, completedOrders } = useStore();
@@ -52,7 +52,13 @@ export default function LoginPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
         <div className="w-full max-w-md space-y-8">
             <div className="text-center">
-                <Logo className="mx-auto h-16 w-16 text-primary mb-4" />
+                <Image
+                  src="/images/logo_1024.png"
+                  alt="FIDS Cashier Lite Logo"
+                  width={64}
+                  height={64}
+                  className="mx-auto mb-4"
+                />
                 <h1 className="text-3xl font-bold tracking-tight">Cashier Lite</h1>
                 <p className="text-muted-foreground">Revenue Sharing Cashing and Reporting System</p>
             </div>
