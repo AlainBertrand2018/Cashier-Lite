@@ -60,6 +60,8 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
         return '/images/wine-glass.svg';
       case 'spirit':
         return '/images/cocktail.svg';
+      case 'ticketing':
+        return '/images/ticket.svg';
       default:
         return '/images/foodstuff.svg';
     }
