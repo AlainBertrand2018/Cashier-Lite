@@ -37,6 +37,7 @@ export default function DashboardPage() {
     fetchProductTypes,
     setActiveEvent,
     lastCompletedOrder,
+    setLastCompletedOrder,
     resetToTenantSelection,
   } = useStore();
   
@@ -58,8 +59,7 @@ export default function DashboardPage() {
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
     if (!isOpen) {
-      resetToTenantSelection();
-      // No need to route, we are already on the dashboard
+      setLastCompletedOrder(null);
     }
   };
 
@@ -71,11 +71,12 @@ export default function DashboardPage() {
       setIsLoading(true);
       const promises = [
         fetchAllProducts(), // Needed for both admin and cashier views
+        fetchTenants(true), // Needed for cashier view tenant name mapping
       ];
 
       if (activeAdmin) {
         setSelectedTenantId(null);
-        promises.push(fetchEvents(true), fetchTenants(true), fetchCashiers(true));
+        promises.push(fetchEvents(true), fetchCashiers(true));
       } else {
         // Cashier needs product types for the new view
         promises.push(fetchProductTypes());
@@ -271,3 +272,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    

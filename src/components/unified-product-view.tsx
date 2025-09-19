@@ -141,7 +141,7 @@ export default function UnifiedProductView() {
                 </Button>
                 </CardHeader>
             </Card>
-            {tenantOrder.map(tenantId => {
+            {tenantOrder.length > 0 ? tenantOrder.map(tenantId => {
               const tenant = tenants.find(t => t.tenant_id === tenantId);
               if (!tenant) return null;
 
@@ -159,7 +159,13 @@ export default function UnifiedProductView() {
                   </div>
                 </div>
               )
-            })}
+            }) : (
+              <Card>
+                <CardContent className="p-12 text-center text-muted-foreground">
+                  No products found in this category.
+                </CardContent>
+              </Card>
+            )}
         </div>
      )
   }
@@ -180,3 +186,5 @@ export default function UnifiedProductView() {
     </div>
   );
 }
+
+    

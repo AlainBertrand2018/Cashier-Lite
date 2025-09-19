@@ -11,20 +11,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Printer, RefreshCw } from 'lucide-react';
-import type { Event, Order, Tenant } from '@/lib/types';
+import type { Event, MultiTenantOrder, Tenant, OrderItem } from '@/lib/types';
 import Image from 'next/image';
 import { useStore } from '@/lib/store';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 
 interface ReceiptDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  order: Order | null;
+  order: MultiTenantOrder | null;
 }
 
 export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDialogProps) {
   const { getTenantById, fetchTenants, getActiveEvent, fetchEvents } = useStore();
+   const tenants = useStore(state => state.tenants);
 
   useEffect(() => {
     if (order) {
@@ -43,14 +44,23 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
       window.location.reload(); 
     }
   };
+  
+  const tenantMap = useMemo(() => new Map(tenants.map(t => [t.tenant_id, t])), [tenants]);
 
   if (!order) return null;
   const orderDate = new Date(order.createdAt);
-  const tenant = getTenantById(order.tenantId);
   const activeEvent = getActiveEvent();
+  
+  const itemsByTenant = order.items.reduce((acc, item) => {
+    const tenantId = item.tenant_id;
+    if (!acc[tenantId]) {
+      acc[tenantId] = [];
+    }
+    acc[tenantId].push(item);
+    return acc;
+  }, {} as Record<number, OrderItem[]>);
 
-
-  const ReceiptBody = ({ order, tenant, event }: { order: Order, tenant: Tenant | undefined, event: Event | undefined }) => (
+  const ReceiptBody = ({ order, event }: { order: MultiTenantOrder, event: Event | undefined }) => (
     <>
       <div className="text-sm text-muted-foreground">
         {event && (
@@ -66,33 +76,13 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
             </>
         )}
         <div className="flex justify-between">
-            <span>Order ID:</span>
+            <span>Transaction ID:</span>
             <span className="font-mono">{order.id.split('-')[1]}</span>
         </div>
         <div className="flex justify-between">
             <span>Date:</span>
             <span>{orderDate.toLocaleString()}</span>
         </div>
-        {tenant && (
-            <>
-                <div className="flex justify-between">
-                    <span>Tenant ID:</span>
-                    <span className="font-mono">{tenant.tenant_id} ({tenant.name})</span>
-                </div>
-                {tenant.brn && (
-                    <div className="flex justify-between">
-                        <span>BRN:</span>
-                        <span className="font-mono">{tenant.brn}</span>
-                    </div>
-                )}
-                {tenant.vat && (
-                    <div className="flex justify-between">
-                        <span>VAT Number:</span>
-                        <span className="font-mono">{tenant.vat}</span>
-                    </div>
-                )}
-            </>
-        )}
       </div>
       <Separator />
       <div className="space-y-2">
@@ -127,6 +117,70 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
       <Separator />
     </>
   );
+
+  const TenantReceiptBody = ({ tenant, items, orderId }: { tenant: Tenant, items: OrderItem[], orderId: string }) => {
+    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    const vat = subtotal * 0.15;
+    const total = subtotal + vat;
+
+    return (
+       <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                    <span>Order ID:</span>
+                    <span className="font-mono">{orderId.split('-')[2]}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Tenant ID:</span>
+                    <span className="font-mono">{tenant.tenant_id} ({tenant.name})</span>
+                </div>
+                {tenant.brn && (
+                    <div className="flex justify-between">
+                        <span>BRN:</span>
+                        <span className="font-mono">{tenant.brn}</span>
+                    </div>
+                )}
+                {tenant.vat && (
+                    <div className="flex justify-between">
+                        <span>VAT Number:</span>
+                        <span className="font-mono">{tenant.vat}</span>
+                    </div>
+                )}
+            </div>
+            <Separator />
+            <div className="space-y-2">
+                {items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-baseline">
+                        <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {item.quantity} x Rs {item.price.toFixed(2)}
+                            </p>
+                        </div>
+                        <p className="font-mono">Rs {(item.quantity * item.price).toFixed(2)}</p>
+                    </div>
+                ))}
+            </div>
+            <Separator />
+            <div className="space-y-2 text-muted-foreground">
+                <div className="flex justify-between">
+                    <p>Subtotal</p>
+                    <p className="font-mono">Rs {subtotal.toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between">
+                    <p>VAT (15%)</p>
+                    <p className="font-mono">Rs {vat.toFixed(2)}</p>
+                </div>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-bold text-lg">
+                <p>Total</p>
+                <p className="font-mono">Rs {total.toFixed(2)}</p>
+            </div>
+            <Separator />
+        </div>
+    )
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -165,26 +219,34 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} tenant={tenant} event={activeEvent} />
+                  <ReceiptBody order={order} event={activeEvent} />
                   <p className="text-center text-xs text-muted-foreground pt-4">
                     Thank you for your patronage!
                   </p>
                 </div>
               </div>
 
-              <div className="receipt-instance">
-                <DialogHeader className="items-center text-center">
-                   <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
-                  <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
-                  <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} tenant={tenant} event={activeEvent} />
-                  <p className="text-center text-xs text-muted-foreground pt-4">
-                    Fully Paid at {orderDate.toLocaleString()}
-                  </p>
-                </div>
-              </div>
+              {Object.entries(itemsByTenant).map(([tenantId, items]) => {
+                 const tenant = tenantMap.get(parseInt(tenantId, 10));
+                 const constituentOrder = order.constituentOrders.find(o => o.tenantId === parseInt(tenantId, 10));
+                 if (!tenant || !constituentOrder) return null;
+
+                 return (
+                    <div className="receipt-instance" key={tenantId}>
+                        <DialogHeader className="items-center text-center">
+                        <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
+                        <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
+                        <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <TenantReceiptBody tenant={tenant} items={items} orderId={constituentOrder.id} />
+                            <p className="text-center text-xs text-muted-foreground pt-4">
+                                Fully Paid at {orderDate.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                 );
+              })}
             </div>
         </div>
         <DialogFooter className="sm:justify-between gap-2 print:hidden pt-4 border-t">
@@ -201,3 +263,5 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
     </Dialog>
   );
 }
+
+    

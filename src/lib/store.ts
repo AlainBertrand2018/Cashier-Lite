@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType, Event } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType, Event, MultiTenantOrder } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
@@ -15,8 +15,8 @@ interface AppState {
   activeEvent: Event | null;
   currentOrder: OrderItem[];
   completedOrders: Order[];
-  lastCompletedOrder: Order | null;
-  selectedTenantId: number | null;
+  lastCompletedOrder: MultiTenantOrder | null;
+  selectedTenantId: number | null; // Represents the tenant of the *first* item added to an order.
   isReportingDone: boolean;
   activeShift: ActiveShift | null;
   activeAdmin: ActiveAdmin | null;
@@ -38,14 +38,14 @@ interface AppState {
 
 
   addProductToOrder: (product: Product) => void;
-  startNewOrderWithProduct: (product: Product) => void;
+  startNewOrderWithProduct: (product: Product) => void; // This might be deprecated now
   setProductForTenantSwitch: (product: Product | null) => void;
   removeProductFromOrder: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
   clearCompletedOrders: () => void;
   completeOrder: () => Promise<void>;
-  setLastCompletedOrder: (order: Order | null) => void;
+  setLastCompletedOrder: (order: MultiTenantOrder | null) => void;
   markOrdersAsSynced: (orderIds: string[]) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
@@ -312,8 +312,6 @@ export const useStore = create<AppState>()(
       },
 
       setSelectedTenantId: (tenantId: number | null) => {
-        // Admins can set this freely for management tasks.
-        // For cashiers, this is derived from the current order.
         const { activeAdmin } = get();
         if (activeAdmin) {
             if (get().selectedTenantId !== tenantId) {
@@ -326,7 +324,6 @@ export const useStore = create<AppState>()(
                 get().fetchAllProducts();
             }
         }
-        // For cashiers, this state is now a reflection of the order, not a manual selection.
         else {
            set({ selectedTenantId: tenantId });
         }
@@ -342,7 +339,7 @@ export const useStore = create<AppState>()(
       },
 
       addProductToOrder: (product) => {
-        const { currentOrder, selectedTenantId, activeAdmin } = get();
+        const { currentOrder, activeAdmin } = get();
         
         if (activeAdmin) {
             console.log("Admin cannot add products to order.");
@@ -354,16 +351,6 @@ export const useStore = create<AppState>()(
             return;
         }
 
-        // If order is empty, this product's tenant becomes the selected tenant.
-        if (currentOrder.length === 0) {
-          set({ selectedTenantId: product.tenant_id });
-        } 
-        // If product from a different tenant is added, trigger confirmation flow.
-        else if (selectedTenantId !== product.tenant_id) {
-          set({ productForTenantSwitch: product });
-          return; 
-        }
-
         const existingItem = currentOrder.find((item) => item.id === product.id);
 
         if (existingItem) {
@@ -371,6 +358,7 @@ export const useStore = create<AppState>()(
             currentOrder: currentOrder.map((item) =>
               item.id === product.id
                 ? { ...item, quantity: item.quantity + 1 }
+                // Find the tenant for the existing item to preserve it
                 : item
             ),
           });
@@ -380,23 +368,15 @@ export const useStore = create<AppState>()(
             name: product.name, 
             price: product.selling_price, 
             quantity: 1,
-            tenant_id: product.tenant_id
+            tenant_id: product.tenant_id,
           }] });
         }
       },
       
       startNewOrderWithProduct: (product) => {
+        // This is now effectively deprecated in favor of the multi-tenant cart
         get().clearCurrentOrder();
-        set({ 
-            selectedTenantId: product.tenant_id,
-            currentOrder: [{
-                id: product.id,
-                name: product.name,
-                price: product.selling_price,
-                quantity: 1,
-                tenant_id: product.tenant_id,
-            }]
-        });
+        get().addProductToOrder(product);
         get().setProductForTenantSwitch(null);
       },
 
@@ -407,9 +387,6 @@ export const useStore = create<AppState>()(
       removeProductFromOrder: (productId) => {
         const newOrder = get().currentOrder.filter((item) => item.id !== productId);
         set({ currentOrder: newOrder });
-        if (newOrder.length === 0) {
-            set({ selectedTenantId: null });
-        }
       },
 
       updateProductQuantity: (productId, quantity) => {
@@ -433,87 +410,126 @@ export const useStore = create<AppState>()(
         set({ completedOrders: [], isReportingDone: false, activeShift: null, activeAdmin: null });
       },
       
-      setLastCompletedOrder: (order: Order | null) => {
+      setLastCompletedOrder: (order: MultiTenantOrder | null) => {
         set({ lastCompletedOrder: order });
       },
       
       completeOrder: async () => {
-        const { currentOrder, selectedTenantId, activeShift, fetchAllProducts } = get();
-        if (currentOrder.length === 0 || !selectedTenantId || !activeShift) return;
+        const { currentOrder, activeShift, fetchAllProducts } = get();
+        if (currentOrder.length === 0 || !activeShift) return;
+        
+        const transactionTimestamp = Date.now();
+        const transactionId = `txn-${transactionTimestamp}-${Math.random().toString(36).substr(2, 9)}`;
 
-        const subtotal = currentOrder.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        );
-        const vat = subtotal * 0.15;
-        const total = subtotal + vat;
-
-        const newOrder: Omit<Order, 'synced'> = {
-          id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          tenantId: selectedTenantId,
-          cashierId: activeShift.cashierId,
-          stationId: activeShift.stationId,
-          items: currentOrder,
-          subtotal,
-          vat,
-          total,
-          createdAt: Date.now(),
-        };
-
-        if (supabase) {
-          for (const item of newOrder.items) {
-            const { error: decrementError } = await supabase.rpc('decrement_product_stock', {
-              p_product_id: item.id,
-              p_quantity_sold: item.quantity,
-            });
-            if (decrementError) {
-              console.error(`Failed to decrement stock for product ${item.id}:`, decrementError);
+        // Group items by tenant
+        const itemsByTenant = currentOrder.reduce((acc, item) => {
+            const tenantId = item.tenant_id;
+            if (!acc[tenantId]) {
+                acc[tenantId] = [];
             }
-          }
-           await fetchAllProducts();
-        }
+            acc[tenantId].push(item);
+            return acc;
+        }, {} as Record<number, OrderItem[]>);
 
-        let isSynced = false;
-        if (supabase) {
-            let orderToInsert: any = {
-                id: newOrder.id,
-                tenant_id: newOrder.tenantId,
-                subtotal: newOrder.subtotal,
-                vat: newOrder.vat,
-                total: newOrder.total,
-                created_at: new Date(newOrder.createdAt).toISOString(),
-                cashier_id: newOrder.cashierId,
-                station_id: newOrder.stationId,
+        const newTenantOrders: Order[] = [];
+        const allItemsForReceipt = [...currentOrder];
+        let totalTransactionAmount = 0;
+
+        for (const tenantIdStr in itemsByTenant) {
+            const tenantId = parseInt(tenantIdStr, 10);
+            const tenantItems = itemsByTenant[tenantId];
+            
+            const subtotal = tenantItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const vat = subtotal * 0.15;
+            const total = subtotal + vat;
+            totalTransactionAmount += total;
+
+            const newOrder: Omit<Order, 'synced'> = {
+                id: `order-${transactionTimestamp}-${tenantId}`,
+                tenantId: tenantId,
+                cashierId: activeShift.cashierId,
+                stationId: activeShift.stationId,
+                items: tenantItems,
+                subtotal,
+                vat,
+                total,
+                createdAt: transactionTimestamp,
+                transactionId: transactionId,
             };
             
-            let { error: orderError } = await supabase.from('orders').insert(orderToInsert);
-            
-            if (orderError) {
-                console.error("Error saving order, will sync later:", JSON.stringify(orderError, null, 2));
-            } else {
-                const orderItemsToInsert = newOrder.items.map(item => ({
-                    order_id: newOrder.id,
-                    product_id: item.id,
-                    quantity: item.quantity,
-                    price: item.price,
-                }));
-                const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
-                if (!itemsError) {
-                    isSynced = true;
-                } else {
-                    console.error("Error saving order items, will sync later:", JSON.stringify(itemsError, null, 2));
+            // --- Database Operations for this tenant's order ---
+            if (supabase) {
+                // Decrement stock for each item
+                for (const item of newOrder.items) {
+                    const { error: decrementError } = await supabase.rpc('decrement_product_stock', {
+                        p_product_id: item.id,
+                        p_quantity_sold: item.quantity,
+                    });
+                    if (decrementError) {
+                        console.error(`Failed to decrement stock for product ${item.id}:`, decrementError);
+                    }
                 }
+
+                // Attempt to sync this tenant's order
+                let isSynced = false;
+                const orderToInsert = {
+                    id: newOrder.id,
+                    tenant_id: newOrder.tenantId,
+                    subtotal: newOrder.subtotal,
+                    vat: newOrder.vat,
+                    total: newOrder.total,
+                    created_at: new Date(newOrder.createdAt).toISOString(),
+                    cashier_id: newOrder.cashierId,
+                    station_id: newOrder.stationId,
+                    transaction_id: newOrder.transactionId,
+                };
+                
+                const { error: orderError } = await supabase.from('orders').insert(orderToInsert);
+                
+                if (orderError) {
+                    console.error(`Error saving order for tenant ${tenantId}, will sync later:`, JSON.stringify(orderError, null, 2));
+                } else {
+                    const orderItemsToInsert = newOrder.items.map(item => ({
+                        order_id: newOrder.id,
+                        product_id: item.id,
+                        quantity: item.quantity,
+                        price: item.price,
+                    }));
+                    const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
+                    if (!itemsError) {
+                        isSynced = true;
+                    } else {
+                        console.error(`Error saving order items for tenant ${tenantId}, will sync later:`, JSON.stringify(itemsError, null, 2));
+                    }
+                }
+                
+                const finalOrder: Order = { ...newOrder, synced: isSynced };
+                newTenantOrders.push(finalOrder);
+            } else {
+                 newTenantOrders.push({ ...newOrder, synced: false });
             }
         }
         
-        const finalOrder: Order = {
-            ...newOrder,
-            synced: isSynced,
-        };
+        await fetchAllProducts();
         
+        // Create a unified object for the receipt
+        const overallSubtotal = allItemsForReceipt.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const overallVat = overallSubtotal * 0.15;
+        const multiTenantOrderForReceipt: MultiTenantOrder = {
+            id: transactionId,
+            createdAt: transactionTimestamp,
+            cashierId: activeShift.cashierId,
+            stationId: activeShift.stationId,
+            items: allItemsForReceipt,
+            subtotal: overallSubtotal,
+            vat: overallVat,
+            total: totalTransactionAmount,
+            constituentOrders: newTenantOrders,
+        };
+
         set((state) => ({
-          completedOrders: [...state.completedOrders, finalOrder],
-          lastCompletedOrder: finalOrder,
+          completedOrders: [...state.completedOrders, ...newTenantOrders],
+          lastCompletedOrder: multiTenantOrderForReceipt,
           currentOrder: [],
           selectedTenantId: null,
         }));
@@ -707,6 +723,7 @@ export const useStore = create<AppState>()(
           created_at: new Date(o.createdAt).toISOString(),
           cashier_id: o.cashierId || activeShift?.cashierId || null,
           station_id: o.stationId || activeShift?.stationId || null,
+          transaction_id: o.transactionId
         }));
 
         const { error: ordersError } = await supabase.from('orders').insert(ordersToInsert, { onConflict: 'id' });
@@ -785,3 +802,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    

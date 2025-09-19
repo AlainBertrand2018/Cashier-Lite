@@ -17,18 +17,13 @@ export default function OrderSummary() {
     removeProductFromOrder, 
     clearCurrentOrder,
     completeOrder,
-    getTenantById,
-    selectedTenantId,
+    tenants, // Get all tenants
   } = useStore();
   
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [tenantName, setTenantName] = useState('');
-
-  const tenant = getTenantById(selectedTenantId);
-
-  useEffect(() => {
-    setTenantName(tenant?.name || '');
-  }, [tenant]);
+  
+  // Create a map for quick tenant lookup
+  const tenantMap = new Map(tenants.map(t => [t.tenant_id, t.name]));
 
   const subtotal = currentOrder.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -49,7 +44,6 @@ export default function OrderSummary() {
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <CardHeader>
         <CardTitle>Current Order</CardTitle>
-        {tenantName && <p className="text-sm text-primary font-semibold">{tenantName}</p>}
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0">
         <ScrollArea className="h-full px-6">
@@ -61,7 +55,9 @@ export default function OrderSummary() {
                 <div key={item.id} className="flex items-center justify-between gap-4">
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">Rs {item.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Rs {item.price.toFixed(2)} • <span className="font-semibold text-primary/80">{tenantMap.get(item.tenant_id) || 'Unknown Tenant'}</span>
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -125,3 +121,5 @@ export default function OrderSummary() {
     </div>
   );
 }
+
+    

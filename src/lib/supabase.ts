@@ -100,6 +100,7 @@ export type Database = {
           subtotal: number;
           cashier_id: string | null;
           station_id: string | null;
+          transaction_id: string | null;
         };
         Insert: {
           id: string;
@@ -110,6 +111,7 @@ export type Database = {
           subtotal: number;
           cashier_id?: string | null;
           station_id?: string | null;
+          transaction_id?: string | null;
         };
       },
       order_items: {
@@ -206,3 +208,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey ? createClient<Database>(supabaseUrl, supabaseAnonKey) : null;
+
+    

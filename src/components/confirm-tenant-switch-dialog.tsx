@@ -14,6 +14,8 @@ import {
 import { useStore } from '@/lib/store';
 import { useEffect, useState } from 'react';
 
+// This component is now effectively deprecated by the multi-tenant cart feature.
+// It is kept in the project to avoid breaking imports, but its functionality is no longer triggered.
 export default function ConfirmTenantSwitchDialog() {
   const { 
     productForTenantSwitch, 
@@ -65,3 +67,5 @@ export default function ConfirmTenantSwitchDialog() {
     </AlertDialog>
   );
 }
+
+    
