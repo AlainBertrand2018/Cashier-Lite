@@ -53,6 +53,7 @@ interface AppState {
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
   setReportingDone: (isDone: boolean) => void;
+  createEvent: (eventData: Omit<Event, 'id' | 'created_at'>) => Promise<boolean>;
 }
 
 export const useStore = create<AppState>()(
@@ -691,6 +692,20 @@ export const useStore = create<AppState>()(
 
       setReportingDone: (isDone: boolean) => {
         set({ isReportingDone: isDone });
+      },
+
+      createEvent: async (eventData: Omit<Event, 'id' | 'created_at'>) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot create event.');
+          return false;
+        }
+        const { error } = await supabase.from('events').insert(eventData);
+        if (error) {
+          console.error('Error creating event:', error);
+          return false;
+        }
+        await get().fetchEvents(true); // Force refresh
+        return true;
       },
 
     }),

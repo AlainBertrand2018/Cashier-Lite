@@ -2,15 +2,17 @@
 'use client';
 
 import AddCashierDialog from '@/components/add-cashier-dialog';
+import CreateEventDialog from '@/components/create-event-dialog';
 import TenantSelectionGrid from '@/components/tenant-selection-grid';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
-import { PlusCircle } from 'lucide-react';
+import { CalendarPlus, PlusCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const { activeAdmin, setSelectedTenantId } = useStore();
   const [isAddCashierOpen, setIsAddCashierOpen] = useState(false);
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
 
   // This effect resets the selected tenant when the user navigates back to the dashboard.
   useEffect(() => {
@@ -29,6 +31,10 @@ export default function DashboardPage() {
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Cashier
                 </Button>
+                <Button variant="outline" onClick={() => setIsCreateEventOpen(true)}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Create Event
+                </Button>
               </div>
               <p className="text-muted-foreground mb-8">You can add new tenants, manage existing ones, and create cashier profiles.</p>
             </>
@@ -42,6 +48,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <AddCashierDialog isOpen={isAddCashierOpen} onOpenChange={setIsAddCashierOpen} />
+      <CreateEventDialog isOpen={isCreateEventOpen} onOpenChange={setIsCreateEventOpen} />
     </>
   );
 }
