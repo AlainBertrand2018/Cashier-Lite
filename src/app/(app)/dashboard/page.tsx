@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
 import UnifiedProductView from '@/components/unified-product-view';
 import OrderSummary from '@/components/order-summary';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import ConfirmTenantSwitchDialog from '@/components/confirm-tenant-switch-dialog';
 import ReceiptDialog from '@/components/receipt-dialog';
 import { useRouter } from 'next/navigation';
