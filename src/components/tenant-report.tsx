@@ -140,9 +140,8 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {sortedOrders.length > 0 ? sortedOrders.map((order) => (
-                            <React.Fragment key={order.id}>
-                                <TableRow className="bg-muted/50 hover:bg-muted/80">
+                        {sortedOrders.length > 0 ? sortedOrders.flatMap((order) => [
+                                <TableRow key={order.id} className="bg-muted/50 hover:bg-muted/80">
                                     <TableCell className="font-medium">
                                         <div className="font-mono text-xs">ID: {order.id.split('-')[1]}</div>
                                         <div className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleString()}</div>
@@ -152,19 +151,18 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
                                             {order.synced ? 'Synced' : 'Local'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell></TableCell> {/* Empty cell for alignment */}
+                                    <TableCell></TableCell>
                                     <TableCell className="text-right font-bold">Rs {order.total.toFixed(2)}</TableCell>
-                                </TableRow>
-                                {order.items.map((item) => (
-                                    <TableRow key={item.id} className="text-sm">
+                                </TableRow>,
+                                ...order.items.map((item) => (
+                                    <TableRow key={`${order.id}-${item.id}`} className="text-sm">
                                         <TableCell className="pl-8">{item.name}</TableCell>
                                         <TableCell className="text-center">{item.quantity}</TableCell>
                                         <TableCell className="text-right">Rs {item.price.toFixed(2)}</TableCell>
                                         <TableCell className="text-right">Rs {(item.price * item.quantity).toFixed(2)}</TableCell>
                                     </TableRow>
-                                ))}
-                            </React.Fragment>
-                        )) : (
+                                ))
+                            ]) : (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
                                 No orders found for this tenant.
