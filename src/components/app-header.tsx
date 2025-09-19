@@ -12,6 +12,13 @@ import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from './ui/separator';
 import Image from 'next/image';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
 
 function NavigationLinks() {
   const pathname = usePathname();
@@ -44,7 +51,14 @@ function NavigationLinks() {
 }
 
 function UserInfoAndLogout() {
-  const { activeShift, activeAdmin, logoutShift, adminLogout } = useStore();
+  const { 
+    activeShift, 
+    activeAdmin, 
+    logoutShift, 
+    adminLogout,
+    isReportingDone,
+    completedOrders
+  } = useStore();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -57,16 +71,43 @@ function UserInfoAndLogout() {
     router.push('/');
   };
 
+  const isCashierLogoutDisabled = activeShift && completedOrders.length > 0 && !isReportingDone;
+  const logoutTooltipMessage = "Complete end-of-shift reporting on the Reports page before logging out.";
+
+  const LogoutButton = () => (
+     <Button 
+        variant="ghost" 
+        onClick={handleLogout} 
+        className="w-full justify-start gap-3 rounded-lg px-3 py-2"
+        disabled={isCashierLogoutDisabled}
+      >
+        <LogOut className="h-4 w-4" />
+        Logout
+      </Button>
+  );
+
   return (
     <>
        <div className="flex items-center gap-2 text-sm font-medium">
         <UserCircle className="h-5 w-5" />
         <span className="truncate">{activeShift?.cashierName || activeAdmin?.email}</span>
       </div>
-      <Button variant="ghost" onClick={handleLogout} className="w-full justify-start gap-3 rounded-lg px-3 py-2">
-        <LogOut className="h-4 w-4" />
-        Logout
-      </Button>
+       {isCashierLogoutDisabled ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div tabIndex={0} className="w-full"> 
+                <LogoutButton />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{logoutTooltipMessage}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <LogoutButton />
+      )}
     </>
   );
 }
