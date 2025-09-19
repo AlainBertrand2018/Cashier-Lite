@@ -51,6 +51,7 @@ interface AppState {
   deleteProduct: (productId: string) => Promise<void>;
   addCashier: (name: string, pin: string) => Promise<boolean>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
+  getActiveEvent: () => Event | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
   setReportingDone: (isDone: boolean) => void;
   createEvent: (eventData: Omit<Event, 'id' | 'created_at'>) => Promise<boolean>;
@@ -275,6 +276,12 @@ export const useStore = create<AppState>()(
       getTenantById: (tenantId: number | null) => {
         if (!tenantId) return undefined;
         return get().tenants.find(t => t.tenant_id === tenantId);
+      },
+
+      getActiveEvent: () => {
+        const { activeShift, events } = get();
+        if (!activeShift?.eventId) return undefined;
+        return events.find(e => e.id === activeShift.eventId);
       },
 
       setSelectedTenantId: (tenantId: number | null) => {
@@ -718,6 +725,7 @@ export const useStore = create<AppState>()(
         activeShift: state.activeShift,
         activeAdmin: state.activeAdmin,
         isReportingDone: state.isReportingDone,
+        events: state.events
       }),
     }
   )

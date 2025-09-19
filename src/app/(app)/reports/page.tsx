@@ -8,17 +8,23 @@ import { Check, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import RevenueReport from '@/components/revenue-report';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 
 export default function ReportsPage() {
   const [isClient, setIsClient] = useState(false);
-  const { completedOrders, isReportingDone, setReportingDone, logoutShift, activeAdmin } = useStore();
+  const { completedOrders, isReportingDone, setReportingDone, logoutShift, activeAdmin, getActiveEvent, fetchEvents } = useStore();
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if(!activeAdmin) {
+      fetchEvents();
+    }
+  }, [activeAdmin, fetchEvents]);
+
+  const activeEvent = getActiveEvent();
 
   const handleLogout = () => {
     logoutShift();
@@ -42,6 +48,11 @@ export default function ReportsPage() {
                 <p className="text-muted-foreground">
                     {activeAdmin ? 'Review overall sales data across all tenants.' : 'Review sales data and manage the current shift.'}
                 </p>
+                 {activeEvent && (
+                    <p className="text-sm text-primary font-semibold mt-1">
+                        Event: {activeEvent.name} ({format(new Date(activeEvent.start_date), 'dd/MM/yy')} - {format(new Date(activeEvent.end_date), 'dd/MM/yy')})
+                    </p>
+                 )}
             </div>
             {!activeAdmin && (
                 <div className="flex gap-2">

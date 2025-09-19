@@ -11,10 +11,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Printer, RefreshCw } from 'lucide-react';
-import type { Order, Tenant } from '@/lib/types';
+import type { Event, Order, Tenant } from '@/lib/types';
 import { Logo } from './icons';
 import { useStore } from '@/lib/store';
 import { useEffect } from 'react';
+import { format } from 'date-fns';
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -23,13 +24,14 @@ interface ReceiptDialogProps {
 }
 
 export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDialogProps) {
-  const { getTenantById, fetchTenants } = useStore();
+  const { getTenantById, fetchTenants, getActiveEvent, fetchEvents } = useStore();
 
   useEffect(() => {
     if (order) {
         fetchTenants();
+        fetchEvents();
     }
-  }, [order, fetchTenants]);
+  }, [order, fetchTenants, fetchEvents]);
 
   const handlePrint = () => {
     const printContents = document.getElementById('receipt-content')?.innerHTML;
@@ -45,10 +47,24 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   if (!order) return null;
   const orderDate = new Date(order.createdAt);
   const tenant = getTenantById(order.tenantId);
+  const activeEvent = getActiveEvent();
 
-  const ReceiptBody = ({ order, tenant }: { order: Order, tenant: Tenant | undefined }) => (
+
+  const ReceiptBody = ({ order, tenant, event }: { order: Order, tenant: Tenant | undefined, event: Event | undefined }) => (
     <>
       <div className="text-sm text-muted-foreground">
+        {event && (
+            <>
+                <div className="flex justify-between">
+                    <span>Event:</span>
+                    <span className="font-mono">{event.id} ({event.name})</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Event Date:</span>
+                    <span>{format(new Date(event.start_date), 'dd/MM')} - {format(new Date(event.end_date), 'dd/MM/yyyy')}</span>
+                </div>
+            </>
+        )}
         <div className="flex justify-between">
             <span>Order ID:</span>
             <span className="font-mono">{order.id.split('-')[1]}</span>
@@ -149,7 +165,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   <p className="text-muted-foreground font-bold">CUSTOMER RECEIPT</p>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} tenant={tenant} />
+                  <ReceiptBody order={order} tenant={tenant} event={activeEvent} />
                   <p className="text-center text-xs text-muted-foreground pt-4">
                     Thank you for your patronage!
                   </p>
@@ -163,7 +179,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                   <p className="text-muted-foreground font-bold">TENANT RECEIPT</p>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                  <ReceiptBody order={order} tenant={tenant} />
+                  <ReceiptBody order={order} tenant={tenant} event={activeEvent} />
                   <p className="text-center text-xs text-muted-foreground pt-4">
                     Fully Paid at {orderDate.toLocaleString()}
                   </p>
