@@ -11,18 +11,20 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { activeShift } = useStore();
   const router = useRouter();
   const [isShiftChecked, setIsShiftChecked] = useState(false);
 
   useEffect(() => {
+    // Access the store only on the client-side within useEffect
+    const { activeShift } = useStore.getState();
+    
     // Check if there's an active shift. If not, redirect to the login page.
     if (!activeShift) {
       router.replace('/');
     } else {
       setIsShiftChecked(true);
     }
-  }, [activeShift, router]);
+  }, [router]);
 
   // Render a loading state or nothing until the shift check is complete
   if (!isShiftChecked) {
