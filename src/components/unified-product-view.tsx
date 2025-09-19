@@ -13,7 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, Box } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import Image from 'next/image';
 
@@ -53,6 +53,12 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
     switch (categoryName.toLowerCase()) {
       case 'non-alcoholic drinks':
         return '/images/NAD.svg';
+      case 'beer':
+        return '/images/beer.svg';
+      case 'wine':
+        return '/images/wine-glass.svg';
+      case 'spirit':
+        return '/images/cocktail.svg';
       default:
         return '/images/foodstuff.svg';
     }
