@@ -50,6 +50,7 @@ interface AppState {
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
+  editTenant: (tenantId: number, tenantData: Partial<Omit<Tenant, 'tenant_id' | 'created_at'>>) => Promise<void>;
   deleteTenant: (tenantId: number) => Promise<void>;
   addProduct: (productData: Omit<Product, 'id' | 'created_at' | 'initial_stock'>) => Promise<Product | null>;
   editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id' | 'initial_stock'>>) => Promise<void>;
@@ -106,6 +107,7 @@ export const useStore = create<AppState>()(
           vat: item.vat || undefined,
           mobile: item.mobile,
           address: item.address || undefined,
+          revenue_share_percentage: item.revenue_share_percentage,
         }));
         set({ tenants: fetchedTenants });
       },
@@ -563,6 +565,26 @@ export const useStore = create<AppState>()(
 
         return data?.tenant_id || null;
       },
+      
+      editTenant: async (tenantId, tenantData) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot edit tenant.');
+          return;
+        }
+
+        const { error } = await supabase
+          .from('tenants')
+          .update(tenantData)
+          .eq('tenant_id', tenantId);
+
+        if (error) {
+          console.error('Error editing tenant:', error);
+          return;
+        }
+        
+        await get().fetchTenants(true);
+      },
+
 
       deleteTenant: async (tenantId: number) => {
         if (!supabase) {

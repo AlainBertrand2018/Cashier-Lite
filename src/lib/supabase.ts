@@ -1,4 +1,5 @@
 
+
 import { createClient, User } from '@supabase/supabase-js'
 import type { Tenant, Product, Order } from './types';
 
@@ -35,6 +36,7 @@ export type Database = {
           vat: string | null;
           mobile: string;
           address: string | null;
+          revenue_share_percentage: number;
         };
         Insert: Omit<Tenant, 'tenant_id' | 'created_at'>;
         Update: Partial<Omit<Tenant, 'tenant_id' | 'created_at'>>;

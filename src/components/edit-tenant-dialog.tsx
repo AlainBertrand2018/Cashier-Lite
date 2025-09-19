@@ -25,7 +25,8 @@ import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { Tenant } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -43,57 +44,61 @@ const formSchema = z.object({
   }),
 });
 
-interface AddTenantDialogProps {
+interface EditTenantDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  tenant: Tenant;
 }
 
-export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) {
-  const addTenant = useStore((state) => state.addTenant);
+export default function EditTenantDialog({ isOpen, onOpenChange, tenant }: EditTenantDialogProps) {
+  const editTenant = useStore((state) => state.editTenant);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      responsibleParty: '',
-      brn: '',
-      vat: '',
-      mobile: '',
-      address: '',
-      revenue_share_percentage: 70.00,
+      name: tenant.name,
+      responsibleParty: tenant.responsibleParty,
+      brn: tenant.brn || '',
+      vat: tenant.vat || '',
+      mobile: tenant.mobile,
+      address: tenant.address || '',
+      revenue_share_percentage: tenant.revenue_share_percentage,
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      name: tenant.name,
+      responsibleParty: tenant.responsibleParty,
+      brn: tenant.brn || '',
+      vat: tenant.vat || '',
+      mobile: tenant.mobile,
+      address: tenant.address || '',
+      revenue_share_percentage: tenant.revenue_share_percentage,
+    });
+  }, [tenant, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const newTenantId = await addTenant(values);
+    await editTenant(tenant.tenant_id, values);
     setIsSubmitting(false);
 
-    if (newTenantId) {
-      toast({
-        title: 'Tenant Added',
-        description: `Tenant "${values.name}" has been created with ID ${newTenantId}.`,
-      });
-      form.reset();
-      onOpenChange(false);
-    } else {
-       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add tenant. Please check the console for details.',
-      });
-    }
+    toast({
+      title: 'Tenant Updated',
+      description: `Tenant "${values.name}" has been successfully updated.`,
+    });
+    onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add New Tenant</DialogTitle>
+          <DialogTitle>Edit Tenant</DialogTitle>
           <DialogDescription>
-            Enter the details for the new tenant. Fields marked with an asterisk are required.
+            Update the details for "{tenant.name}".
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -200,7 +205,7 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Tenant'}
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>
@@ -209,4 +214,3 @@ export default function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialo
     </Dialog>
   );
 }
-

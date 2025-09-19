@@ -18,6 +18,7 @@ interface TenantReport {
   name: string;
   orderCount: number;
   totalRevenue: number;
+  revenue_share_percentage: number;
 }
 
 export default function RevenueReport() {
@@ -28,14 +29,11 @@ export default function RevenueReport() {
     fetchTenants();
   }, [fetchTenants]);
 
-  const grossRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalOrders = completedOrders.length;
-  const organizerTotalRevenue = grossRevenue * 0.3;
-  const pendingSyncOrders = completedOrders.filter(order => !order.synced).length;
 
+  const pendingSyncOrders = completedOrders.filter(order => !order.synced).length;
   const sortedOrders = [...completedOrders].sort((a, b) => b.createdAt - a.createdAt);
 
-  const tenantReports: TenantReport[] = tenants.map(tenant => {
+  const tenantReports = tenants.map(tenant => {
     const ordersForTenant = completedOrders.filter(o => o.tenantId === tenant.tenant_id);
     const revenueForTenant = ordersForTenant.reduce((sum, o) => sum + o.total, 0);
     return {
@@ -43,8 +41,19 @@ export default function RevenueReport() {
       name: tenant.name,
       orderCount: ordersForTenant.length,
       totalRevenue: revenueForTenant,
+      revenue_share_percentage: tenant.revenue_share_percentage,
     };
   });
+  
+  const grossRevenue = tenantReports.reduce((sum, report) => sum + report.totalRevenue, 0);
+  const totalOrders = completedOrders.length;
+  
+  const organizerTotalRevenue = tenantReports.reduce((sum, report) => {
+    const tenantShare = report.totalRevenue * (report.revenue_share_percentage / 100);
+    const organizerShare = report.totalRevenue - tenantShare;
+    return sum + organizerShare;
+  }, 0);
+
 
   const topTenants = [...tenantReports].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5);
 
@@ -68,7 +77,7 @@ export default function RevenueReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs {organizerTotalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">30% share of gross revenue</p>
+            <p className="text-xs text-muted-foreground">Share of gross revenue</p>
           </CardContent>
         </Card>
         <Card>

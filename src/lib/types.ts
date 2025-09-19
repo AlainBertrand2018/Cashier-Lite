@@ -36,6 +36,7 @@ export interface Tenant {
   vat?: string;
   mobile: string;
   address?: string;
+  revenue_share_percentage: number;
 }
 
 export interface Cashier {

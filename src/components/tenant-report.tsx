@@ -16,8 +16,11 @@ interface TenantReportProps {
 
 export default function TenantReport({ tenant, orders, products }: TenantReportProps) {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const tenantShare = totalRevenue * 0.7;
-  const organizerShare = totalRevenue * 0.3;
+  
+  // Use the dynamic revenue share percentage from the tenant object, with a fallback to 70%
+  const tenantSharePercentage = tenant.revenue_share_percentage ?? 70.00;
+  const tenantShare = totalRevenue * (tenantSharePercentage / 100);
+  const organizerShare = totalRevenue - tenantShare;
   
   const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -59,7 +62,7 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Tenant's Share (70%)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Tenant's Share ({tenantSharePercentage.toFixed(2)}%)</CardTitle>
                     <DollarSign className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
@@ -68,7 +71,7 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Organizer's Share (30%)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Organizer's Share</CardTitle>
                     <DollarSign className="h-4 w-4 text-secondary-foreground" />
                 </CardHeader>
                 <CardContent>

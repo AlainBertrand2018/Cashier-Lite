@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Card, CardContent } from '@/components/ui/card';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import AddTenantDialog from './add-tenant-dialog';
 import Link from 'next/link';
 import type { Tenant } from '@/lib/types';
@@ -20,29 +20,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import EditTenantDialog from './edit-tenant-dialog';
 
-function TenantCard({ tenant, onDelete }: { tenant: Tenant, onDelete: (tenant: Tenant) => void }) {
+function TenantCard({ tenant, onDelete, onEdit }: { tenant: Tenant, onDelete: (tenant: Tenant) => void, onEdit: (tenant: Tenant) => void }) {
   const { activeAdmin } = useStore();
   const href = activeAdmin ? `/tenants/${tenant.tenant_id}/manage` : `/tenants/${tenant.tenant_id}`;
   
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
+  const handleActionClick = (e: React.MouseEvent, action: (tenant: Tenant) => void) => {
+    e.preventDefault();
     e.stopPropagation();
-    onDelete(tenant);
+    action(tenant);
   };
 
   return (
     <Card className="relative group/tenant-card cursor-pointer transition-all hover:shadow-lg hover:scale-105 h-full flex flex-col justify-between">
       {activeAdmin && (
-        <Button 
-          variant="destructive" 
-          size="icon" 
-          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover/tenant-card:opacity-100 transition-opacity z-10"
-          onClick={handleDeleteClick}
-          aria-label={`Delete tenant ${tenant.name}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover/tenant-card:opacity-100 transition-opacity z-10">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-7 w-7 bg-background/80 backdrop-blur-sm"
+              onClick={(e) => handleActionClick(e, onEdit)}
+              aria-label={`Edit tenant ${tenant.name}`}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="destructive" 
+              size="icon" 
+              className="h-7 w-7"
+              onClick={(e) => handleActionClick(e, onDelete)}
+              aria-label={`Delete tenant ${tenant.name}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+        </div>
       )}
       <Link href={href} passHref className="absolute inset-0 z-0">
         <span className="sr-only">View tenant {tenant.name}</span>
@@ -78,7 +90,7 @@ export default function TenantSelectionGrid() {
   const {tenants, fetchTenants, activeAdmin, deleteTenant} = useStore();
   const [isAddTenantOpen, setAddTenantOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [tenantToAction, setTenantToAction] = useState<{ type: 'delete' | 'edit', tenant: Tenant } | null>(null);
 
   useEffect(() => {
     const loadTenants = async () => {
@@ -90,15 +102,23 @@ export default function TenantSelectionGrid() {
   }, [fetchTenants]);
 
   const handleDeleteRequest = (tenant: Tenant) => {
-    setTenantToDelete(tenant);
+    setTenantToAction({ type: 'delete', tenant });
+  };
+  
+  const handleEditRequest = (tenant: Tenant) => {
+    setTenantToAction({ type: 'edit', tenant });
   };
 
   const confirmDelete = async () => {
-    if (tenantToDelete) {
-      await deleteTenant(tenantToDelete.tenant_id);
-      setTenantToDelete(null);
+    if (tenantToAction?.type === 'delete') {
+      await deleteTenant(tenantToAction.tenant.tenant_id);
+      setTenantToAction(null);
     }
   };
+  
+  const closeDialogs = () => {
+    setTenantToAction(null);
+  }
 
   const sortedTenants = [...tenants].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -106,7 +126,7 @@ export default function TenantSelectionGrid() {
     <>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {isLoading ? <TenantGridSkeleton /> : sortedTenants.map((tenant) => (
-              <TenantCard key={tenant.tenant_id} tenant={tenant} onDelete={handleDeleteRequest} />
+              <TenantCard key={tenant.tenant_id} tenant={tenant} onDelete={handleDeleteRequest} onEdit={handleEditRequest} />
             ))}
             {activeAdmin && !isLoading && (
                 <Card
@@ -122,15 +142,15 @@ export default function TenantSelectionGrid() {
         </div>
       <AddTenantDialog isOpen={isAddTenantOpen} onOpenChange={setAddTenantOpen} />
        <AlertDialog
-        open={!!tenantToDelete}
-        onOpenChange={(isOpen) => !isOpen && setTenantToDelete(null)}
+        open={tenantToAction?.type === 'delete'}
+        onOpenChange={(isOpen) => !isOpen && closeDialogs()}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              tenant "{tenantToDelete?.name}" and all of its associated products.
+              tenant "{tenantToAction?.tenant.name}" and all of its associated products.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -139,6 +159,14 @@ export default function TenantSelectionGrid() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {tenantToAction?.type === 'edit' && (
+        <EditTenantDialog 
+            isOpen={true}
+            onOpenChange={(isOpen) => !isOpen && closeDialogs()}
+            tenant={tenantToAction.tenant}
+        />
+      )}
     </>
   );
 }

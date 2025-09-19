@@ -31,13 +31,19 @@ export function AllTenantsReport() {
         (sum, o) => sum + o.total,
         0
       );
+      // Use the dynamic revenue share percentage, with a fallback to 70%
+      const tenantSharePercentage = tenant.revenue_share_percentage ?? 70.00;
+      const tenantShare = revenueForTenant * (tenantSharePercentage / 100);
+      const organizerShare = revenueForTenant - tenantShare;
+      
       return {
         id: tenant.tenant_id,
         name: tenant.name,
         orderCount: ordersForTenant.length,
         totalRevenue: revenueForTenant,
-        tenantShare: revenueForTenant * 0.7,
-        organizerShare: revenueForTenant * 0.3,
+        tenantShare: tenantShare,
+        organizerShare: organizerShare,
+        sharePercentage: tenantSharePercentage,
       };
     })
     .sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -52,8 +58,8 @@ export function AllTenantsReport() {
               <TableHead>Tenant Name</TableHead>
               <TableHead className="text-right">Orders</TableHead>
               <TableHead className="text-right">Gross Revenue</TableHead>
-              <TableHead className="text-right">Tenant Share (70%)</TableHead>
-              <TableHead className="text-right">Organizer Share (30%)</TableHead>
+              <TableHead className="text-right">Tenant Share</TableHead>
+              <TableHead className="text-right">Organizer Share</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -66,7 +72,7 @@ export function AllTenantsReport() {
                   Rs {report.totalRevenue.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-right font-mono">
-                  Rs {report.tenantShare.toFixed(2)}
+                  Rs {report.tenantShare.toFixed(2)} ({report.sharePercentage.toFixed(2)}%)
                 </TableCell>
                 <TableCell className="text-right font-mono">
                   Rs {report.organizerShare.toFixed(2)}
