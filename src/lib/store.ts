@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType, Event, MultiTenantOrder } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType, Event, MultiTenantOrder, CashierRole } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
@@ -26,7 +26,7 @@ interface AppState {
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
   fetchAllProducts: () => Promise<void>;
-  fetchProductTypes: () => Promise<void>;
+  fetchProductTypes: (role?: CashierRole) => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
   fetchEvents: (force?: boolean) => Promise<void>;
 
@@ -56,7 +56,8 @@ interface AppState {
   editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id' | 'initial_stock'>>) => Promise<void>;
   addStock: (productId: string, quantity: number) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
-  addCashier: (name: string, pin: string) => Promise<boolean>;
+  addCashier: (name: string, pin: string, role: CashierRole) => Promise<boolean>;
+  editCashier: (cashierId: string, data: Partial<Cashier>) => Promise<boolean>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   getActiveEvent: () => Event | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
@@ -143,25 +144,58 @@ export const useStore = create<AppState>()(
 
         if (error) {
           console.error(`Error fetching all products:`, error);
-          set({ products: [] });
+          set({ products: data || [] });
           return;
         }
         set({ products: data || [] });
       },
 
-      fetchProductTypes: async () => {
+      fetchProductTypes: async (role) => {
          if (!supabase) {
           console.log("Supabase not configured. Skipping fetchProductTypes.");
           return;
         }
-        if (get().productTypes.length > 0) return;
 
-        const { data, error } = await supabase.from('product_types').select('*');
-        if (error) {
-          console.error('Error fetching product types:', error);
-          return;
+        // Admin sees all categories. Cashier sees filtered categories.
+        if (role) {
+            const { data: roleData, error: roleError } = await supabase
+                .from('product_category_roles')
+                .select('product_type_id')
+                .eq('cashier_role', role);
+
+            if (roleError) {
+                console.error(`Error fetching product types for role ${role}:`, roleError);
+                set({ productTypes: [] });
+                return;
+            }
+
+            const typeIds = roleData.map(r => r.product_type_id);
+            if (typeIds.length === 0) {
+                set({ productTypes: [] });
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('product_types')
+                .select('*')
+                .in('id', typeIds);
+            
+            if (error) {
+                console.error('Error fetching filtered product types:', error);
+                set({ productTypes: [] });
+            } else {
+                set({ productTypes: data || [] });
+            }
+
+        } else {
+            // Admin or initial load without role
+            const { data, error } = await supabase.from('product_types').select('*');
+            if (error) {
+              console.error('Error fetching product types:', error);
+              return;
+            }
+            set({ productTypes: data || [] });
         }
-        set({ productTypes: data || [] });
       },
 
        fetchCashiers: async (force = false) => {
@@ -204,7 +238,7 @@ export const useStore = create<AppState>()(
         }
         const { data: cashier, error } = await supabase
           .from('cashiers')
-          .select('id, name, pin')
+          .select('id, name, pin, role')
           .eq('id', cashierId)
           .single();
 
@@ -242,6 +276,7 @@ export const useStore = create<AppState>()(
                 floatAmount: floatAmount,
                 startTime: new Date().toISOString(),
                 eventId: eventId,
+                role: cashier.role,
             },
             activeAdmin: null,
             selectedTenantId: null,
@@ -707,13 +742,13 @@ export const useStore = create<AppState>()(
         await get().fetchAllProducts();
       },
 
-      addCashier: async (name, pin) => {
+      addCashier: async (name, pin, role) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot add cashier.');
           return false;
         }
 
-        const { error } = await supabase.from('cashiers').insert({ name, pin });
+        const { error } = await supabase.from('cashiers').insert({ name, pin, role });
 
         if (error) {
           console.error('Error adding cashier:', error);
@@ -724,6 +759,24 @@ export const useStore = create<AppState>()(
         return true;
       },
       
+      editCashier: async (cashierId: string, data: Partial<Cashier>) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot edit cashier.');
+          return false;
+        }
+        const { error } = await supabase
+          .from('cashiers')
+          .update(data)
+          .eq('id', cashierId);
+
+        if (error) {
+          console.error('Error editing cashier:', error);
+          return false;
+        }
+        await get().fetchCashiers(true);
+        return true;
+      },
+
       syncOrders: async () => {
         if (!supabase) {
           return { success: false, syncedCount: 0, error: new Error('Supabase not configured.') };
@@ -824,5 +877,3 @@ export const useStore = create<AppState>()(
     }
   )
 );
-
-    

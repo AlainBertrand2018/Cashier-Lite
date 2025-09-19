@@ -1,4 +1,7 @@
 
+
+export type CashierRole = 'Bar' | 'Entrance' | 'Other';
+
 export interface Event {
   id: number;
   created_at: string;
@@ -44,6 +47,7 @@ export interface Cashier {
     created_at: string;
     name: string;
     pin?: string;
+    role: CashierRole;
 }
 
 export interface OrderItem {
@@ -90,11 +94,10 @@ export interface ActiveShift {
     floatAmount: number;
     startTime: string;
     eventId: number;
+    role: CashierRole;
 }
 
 export interface ActiveAdmin {
     id: string;
     email: string;
 }
-
-    

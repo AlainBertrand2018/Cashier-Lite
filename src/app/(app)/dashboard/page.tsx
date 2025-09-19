@@ -5,9 +5,9 @@ import AddCashierDialog from '@/components/add-cashier-dialog';
 import CreateEventDialog from '@/components/create-event-dialog';
 import TenantSelectionGrid from '@/components/tenant-selection-grid';
 import { useStore } from '@/lib/store';
-import { Building, Calendar, DollarSign, PlusCircle, Users } from 'lucide-react';
+import { Building, Calendar, DollarSign, PlusCircle, Users, Edit, AppWindow } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { Cashier, Event, Product, Tenant } from '@/lib/types';
+import type { Cashier, Event, Product, Tenant, ProductType } from '@/lib/types';
 import AddTenantDialog from '@/components/add-tenant-dialog';
 import ManagementCard from '@/components/management-card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ import { Card } from '@/components/ui/card';
 import ConfirmTenantSwitchDialog from '@/components/confirm-tenant-switch-dialog';
 import ReceiptDialog from '@/components/receipt-dialog';
 import { useRouter } from 'next/navigation';
+import EditCashierDialog from '@/components/edit-cashier-dialog';
+import ManageCategoryRolesDialog from '@/components/manage-category-roles-dialog';
 
 
 export default function DashboardPage() {
@@ -38,18 +40,19 @@ export default function DashboardPage() {
     setActiveEvent,
     lastCompletedOrder,
     setLastCompletedOrder,
-    resetToTenantSelection,
   } = useStore();
   
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
 
   // Dialog states
   const [isAddCashierOpen, setIsAddCashierOpen] = useState(false);
+  const [isEditCashierOpen, setIsEditCashierOpen] = useState(false);
+  const [cashierToEdit, setCashierToEdit] = useState<Cashier | null>(null);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+
 
   // View All Dialog states
   const [viewAllTitle, setViewAllTitle] = useState('');
@@ -69,17 +72,24 @@ export default function DashboardPage() {
     
     const loadData = async () => {
       setIsLoading(true);
+      const { activeShift } = useStore.getState();
+
+      // Common fetches for both admin and cashier
       const promises = [
-        fetchAllProducts(), // Needed for both admin and cashier views
-        fetchTenants(true), // Needed for cashier view tenant name mapping
+        fetchAllProducts(),
+        fetchTenants(true),
       ];
 
       if (activeAdmin) {
         setSelectedTenantId(null);
-        promises.push(fetchEvents(true), fetchCashiers(true));
-      } else {
-        // Cashier needs product types for the new view
-        promises.push(fetchProductTypes());
+        promises.push(
+          fetchEvents(true), 
+          fetchCashiers(true),
+          fetchProductTypes() // Admin needs all product types for category management
+        );
+      } else if (activeShift) {
+        // Cashier only fetches product types relevant to their role
+        promises.push(fetchProductTypes(activeShift.role));
       }
       
       await Promise.all(promises);
@@ -96,6 +106,11 @@ export default function DashboardPage() {
         console.warn("Tried to set an active event with an invalid ID:", eventId);
     }
   };
+
+  const handleEditCashier = (cashier: Cashier) => {
+    setCashierToEdit(cashier);
+    setIsEditCashierOpen(true);
+  }
 
   const handleViewAll = (title: string, data: any[], renderItem: (item: any) => React.ReactNode) => {
     setViewAllTitle(title);
@@ -223,8 +238,14 @@ export default function DashboardPage() {
                   </Button>
                 }
                  onViewAll={() => handleViewAll('All Cashiers', cashiers, (item: Cashier) => 
-                  <div className="flex justify-between items-center">
-                    <span>{item.name}</span>
+                  <div className="flex justify-between items-center w-full">
+                    <div>
+                      <span>{item.name}</span>
+                      <p className="text-xs text-muted-foreground">Role: {item.role}</p>
+                    </div>
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditCashier(item)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                   </div>
                 )}
                 isLoading={isLoading}
@@ -234,6 +255,25 @@ export default function DashboardPage() {
                 ))}
               </ManagementCard>
             </div>
+             {/* Category Role Management */}
+             <Card>
+                <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-muted p-3 rounded-lg">
+                                <AppWindow />
+                            </div>
+                            <div>
+                                <CardTitle>Category Management</CardTitle>
+                                <p className="text-sm text-muted-foreground">Assign which cashier roles can see which product categories.</p>
+                            </div>
+                        </div>
+                        <Button variant="outline" onClick={() => setIsManageCategoriesOpen(true)}>
+                            Manage Roles
+                        </Button>
+                    </div>
+                </CardHeader>
+             </Card>
             <div id="tenant-grid" className="w-full">
                 <h2 className="text-2xl font-bold tracking-tight mb-2">Tenant Management</h2>
                 <p className="text-muted-foreground mb-4">Select a tenant to manage their products.</p>
@@ -255,8 +295,16 @@ export default function DashboardPage() {
         )}
       </div>
       <AddCashierDialog isOpen={isAddCashierOpen} onOpenChange={setIsAddCashierOpen} />
+      {cashierToEdit && (
+        <EditCashierDialog 
+            isOpen={isEditCashierOpen} 
+            onOpenChange={setIsEditCashierOpen} 
+            cashier={cashierToEdit} 
+        />
+      )}
       <CreateEventDialog isOpen={isCreateEventOpen} onOpenChange={setIsCreateEventOpen} />
       <AddTenantDialog isOpen={isAddTenantOpen} onOpenChange={setIsAddTenantOpen} />
+      <ManageCategoryRolesDialog isOpen={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
        <ViewAllDialog 
         isOpen={isViewAllOpen}
         onOpenChange={setIsViewAllOpen}
@@ -272,5 +320,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

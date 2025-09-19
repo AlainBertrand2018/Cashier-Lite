@@ -1,7 +1,7 @@
 
 
 import { createClient, User } from '@supabase/supabase-js'
-import type { Tenant, Product, Order } from './types';
+import type { Tenant, Product, Order, CashierRole } from './types';
 
 export type Database = {
   public: {
@@ -50,6 +50,16 @@ export type Database = {
           name: string;
         };
       },
+      product_category_roles: {
+        Row: {
+          product_type_id: number;
+          cashier_role: CashierRole;
+        };
+        Insert: {
+          product_type_id: number;
+          cashier_role: CashierRole;
+        };
+      },
       products: {
         Row: {
             id: string; // uuid
@@ -86,11 +96,18 @@ export type Database = {
             created_at: string;
             name: string;
             pin: string | null;
+            role: CashierRole;
         };
         Insert: {
             name: string;
             pin?: string | null;
+            role: CashierRole;
         };
+        Update: Partial<{
+          name: string;
+          pin: string;
+          role: CashierRole;
+        }>;
       },
       orders: {
         Row: {
@@ -198,7 +215,9 @@ export type Database = {
         Returns: undefined;
       };
     }
-    Enums: {}
+    Enums: {
+      cashier_role: 'Bar' | 'Entrance' | 'Other';
+    }
   }
 }
 
@@ -210,5 +229,3 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey ? createClient<Database>(supabaseUrl, supabaseAnonKey) : null;
-
-    

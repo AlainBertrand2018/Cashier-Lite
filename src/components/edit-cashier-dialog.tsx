@@ -31,8 +31,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import type { CashierRole } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import type { Cashier, CashierRole } from '@/lib/types';
 
 const cashierRoles: CashierRole[] = ['Bar', 'Entrance', 'Other'];
 
@@ -40,52 +40,66 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: 'Cashier name must be at least 2 characters.',
   }),
-  pin: z.string().length(4, {
-    message: 'PIN must be exactly 4 digits.',
-  }).regex(/^\d{4}$/, {
-    message: 'PIN must be 4 digits.',
-  }),
+  pin: z.string().optional(),
   role: z.enum(cashierRoles, {
     required_error: 'Please select a role for the cashier.',
   }),
 });
 
-interface AddCashierDialogProps {
+interface EditCashierDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  cashier: Cashier;
 }
 
-export default function AddCashierDialog({ isOpen, onOpenChange }: AddCashierDialogProps) {
-  const addCashier = useStore((state) => state.addCashier);
+export default function EditCashierDialog({ isOpen, onOpenChange, cashier }: EditCashierDialogProps) {
+  const { editCashier } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      name: cashier.name,
       pin: '',
-      role: 'Other',
+      role: cashier.role,
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      name: cashier.name,
+      pin: '',
+      role: cashier.role,
+    });
+  }, [cashier, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const success = await addCashier(values.name, values.pin, values.role);
+    
+    // Filter out empty pin so it's not updated if left blank
+    const updateData: Partial<Cashier> = {
+      name: values.name,
+      role: values.role,
+    };
+    if (values.pin) {
+      updateData.pin = values.pin;
+    }
+
+    const success = await editCashier(cashier.id, updateData);
     setIsSubmitting(false);
 
     if (success) {
       toast({
-        title: 'Cashier Added',
-        description: `Cashier "${values.name}" has been created.`,
+        title: 'Cashier Updated',
+        description: `Details for "${values.name}" have been updated.`,
       });
-      form.reset();
       onOpenChange(false);
     } else {
        toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to add cashier. Please check the console for details.',
+        description: 'Failed to update cashier. Please check the console.',
       });
     }
   }
@@ -94,9 +108,9 @@ export default function AddCashierDialog({ isOpen, onOpenChange }: AddCashierDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Cashier</DialogTitle>
+          <DialogTitle>Edit Cashier</DialogTitle>
           <DialogDescription>
-            Enter the details for the new cashier.
+            Update details for {cashier.name}. Leave PIN blank to keep it unchanged.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -120,7 +134,7 @@ export default function AddCashierDialog({ isOpen, onOpenChange }: AddCashierDia
                 name="pin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>4-Digit PIN</FormLabel>
+                    <FormLabel>New 4-Digit PIN</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -163,7 +177,7 @@ export default function AddCashierDialog({ isOpen, onOpenChange }: AddCashierDia
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Cashier'}
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>
