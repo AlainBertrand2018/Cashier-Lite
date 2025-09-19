@@ -2,7 +2,7 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { Product, Tenant } from '@/lib/types';
+import { Product, ProductType } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -12,16 +12,9 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Input } from './ui/input';
-import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
-
+import { useState, useMemo, useEffect } from 'react';
+import { ArrowLeft, Box } from 'lucide-react';
+import { Button } from './ui/button';
 
 function ProductCard({ product }: { product: Product }) {
   const { addProductToOrder } = useStore();
@@ -54,94 +47,76 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
+function CategoryCard({ category, onSelect }: { category: ProductType, onSelect: () => void }) {
+  return (
+     <Card 
+      className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+      onClick={onSelect}
+    >
+        <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center gap-4">
+            <Box className="w-12 h-12 text-muted-foreground" />
+            <p className="text-lg font-semibold">{category.name}</p>
+        </CardContent>
+    </Card>
+  )
+}
+
 export default function UnifiedProductView() {
-  const { products, tenants } = useStore();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { products, productTypes, fetchProductTypes } = useStore();
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm) {
-      return products;
-    }
-    return products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [products, searchTerm]);
+  useEffect(() => {
+    fetchProductTypes();
+  }, [fetchProductTypes]);
 
-  const productsByTenant = useMemo(() => {
-    return filteredProducts.reduce((acc, product) => {
-      const tenantId = product.tenant_id;
-      if (!acc[tenantId]) {
-        acc[tenantId] = [];
-      }
-      acc[tenantId].push(product);
-      return acc;
-    }, {} as Record<number, Product[]>);
-  }, [filteredProducts]);
-  
-  const sortedTenants = useMemo(() => {
-    return [...tenants].sort((a, b) => a.name.localeCompare(b.name));
-  }, [tenants]);
+  const selectedCategory = useMemo(() => {
+    if (!selectedTypeId) return null;
+    return productTypes.find(pt => pt.id === selectedTypeId);
+  }, [selectedTypeId, productTypes]);
 
-  const openAccordionItems = useMemo(() => {
-    if (!searchTerm) return [];
-    // If there's a search term, return the list of all tenant IDs that have matching products
-    return Object.keys(productsByTenant).map(tenantId => `tenant-${tenantId}`);
-  }, [searchTerm, productsByTenant]);
+  const productsInCategory = useMemo(() => {
+    if (!selectedTypeId) return [];
+    return products.filter(p => p.product_type_id === selectedTypeId);
+  }, [selectedTypeId, products]);
+
+
+  if (selectedTypeId) {
+     return (
+        <div className="space-y-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Products in {selectedCategory?.name}</CardTitle>
+                    <CardDescription>Select a product to add it to the order.</CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => setSelectedTypeId(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Categories
+                </Button>
+                </CardHeader>
+            </Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {productsInCategory.map(product => (
+                    <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+        </div>
+     )
+  }
 
   return (
     <div className="space-y-4">
        <Card>
         <CardHeader>
           <CardTitle>Product Catalog</CardTitle>
-          <CardDescription>Select products from any tenant to begin an order.</CardDescription>
+          <CardDescription>Select a category to view products.</CardDescription>
         </CardHeader>
-        <CardContent>
-           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </CardContent>
       </Card>
-
-      <Accordion 
-        type="multiple" 
-        className="w-full space-y-2"
-        key={openAccordionItems.join('-')} // Force re-render when search term changes
-        defaultValue={openAccordionItems}
-      >
-        {sortedTenants.map(tenant => {
-          const tenantProducts = productsByTenant[tenant.tenant_id];
-          if (!tenantProducts || tenantProducts.length === 0) {
-            return null; // Don't render tenants with no matching products during a search
-          }
-          return (
-             <Card key={tenant.tenant_id} className="overflow-hidden">
-                <AccordionItem value={`tenant-${tenant.tenant_id}`} className="border-b-0">
-                    <AccordionTrigger className="p-4 hover:no-underline bg-muted/50">
-                       <div className="flex items-center gap-4">
-                         <div className="text-3xl font-extrabold tracking-tighter">{tenant.tenant_id}</div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-left">{tenant.name}</h3>
-                            <p className="text-sm text-muted-foreground text-left">{tenant.mobile}</p>
-                          </div>
-                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {tenantProducts.map(product => (
-                                <ProductCard key={product.id} product={product} />
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Card>
-          )
-        })}
-      </Accordion>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {productTypes.map(pt => (
+          <CategoryCard key={pt.id} category={pt} onSelect={() => setSelectedTypeId(pt.id)} />
+        ))}
+      </div>
     </div>
   );
 }

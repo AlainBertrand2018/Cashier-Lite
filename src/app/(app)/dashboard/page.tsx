@@ -34,6 +34,7 @@ export default function DashboardPage() {
     fetchTenants,
     fetchCashiers,
     fetchAllProducts,
+    fetchProductTypes,
     setActiveEvent,
     lastCompletedOrder,
     resetToTenantSelection,
@@ -65,22 +66,27 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // For admins, reset tenant selection. For cashiers, this is handled by the new flow.
-    if (activeAdmin) {
-       setSelectedTenantId(null);
-    }
+    
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchEvents(true),
-        fetchTenants(true),
-        fetchCashiers(true),
+      const promises = [
         fetchAllProducts(), // Needed for both admin and cashier views
-      ]);
+      ];
+
+      if (activeAdmin) {
+        setSelectedTenantId(null);
+        promises.push(fetchEvents(true), fetchTenants(true), fetchCashiers(true));
+      } else {
+        // Cashier needs product types for the new view
+        promises.push(fetchProductTypes());
+      }
+      
+      await Promise.all(promises);
       setIsLoading(false);
     };
+
     loadData();
-  }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts]);
+  }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts, fetchProductTypes]);
 
   const handleToggleActive = (eventId: number | undefined | null, newIsActive: boolean) => {
     if (newIsActive && eventId) {
