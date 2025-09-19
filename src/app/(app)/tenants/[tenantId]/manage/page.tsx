@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import EditProductDialog from '@/components/edit-product-dialog';
 import type { Product } from '@/lib/types';
+import AddProductDialog from '@/components/add-product-dialog';
 
 export default function ManageProductsPage() {
   const params = useParams();
@@ -44,6 +45,7 @@ export default function ManageProductsPage() {
   const [tenantName, setTenantName] = useState('Tenant');
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -91,11 +93,17 @@ export default function ManageProductsPage() {
         </div>
       </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Product List</CardTitle>
-          <CardDescription>
-            Here you can edit or delete existing products for this tenant.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Product List</CardTitle>
+            <CardDescription>
+              Here you can edit or delete existing products for this tenant.
+            </CardDescription>
+          </div>
+           <Button onClick={() => setIsAddProductOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -168,6 +176,13 @@ export default function ManageProductsPage() {
             product={productToEdit}
         />
       )}
+
+       {/* Add Product Dialog */}
+       <AddProductDialog 
+        isOpen={isAddProductOpen}
+        onOpenChange={setIsAddProductOpen}
+        tenantId={tenantId}
+      />
     </>
   );
 }
