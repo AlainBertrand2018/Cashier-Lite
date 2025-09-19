@@ -13,7 +13,7 @@ import ManagementCard from '@/components/management-card';
 import { Button } from '@/components/ui/button';
 import ViewAllDialog from '@/components/view-all-dialog';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Switch } from '@/components/ui/switch';
 
 export default function DashboardPage() {
   const { 
@@ -27,9 +27,9 @@ export default function DashboardPage() {
     fetchTenants,
     fetchCashiers,
     fetchAllProducts,
+    setActiveEvent,
   } = useStore();
   
-  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +61,14 @@ export default function DashboardPage() {
       loadAdminData();
     }
   }, [activeAdmin, setSelectedTenantId, fetchEvents, fetchTenants, fetchCashiers, fetchAllProducts]);
+
+  const handleToggleActive = (eventId: number | undefined | null, newIsActive: boolean) => {
+    if (newIsActive && eventId) {
+      setActiveEvent(eventId);
+    } else if (!eventId) {
+        console.warn("Tried to set an active event with an invalid ID:", eventId);
+    }
+  };
 
   const handleViewAll = (title: string, data: any[], renderItem: (item: any) => React.ReactNode) => {
     setViewAllTitle(title);
@@ -100,9 +108,16 @@ export default function DashboardPage() {
                   </Button>
                 }
                 onViewAll={() => handleViewAll('All Events', events, (item: Event) => 
-                  <div className="flex justify-between items-center">
-                    <span>{item.name}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(item.start_date).toLocaleDateString()} - {new Date(item.end_date).toLocaleDateString()}</span>
+                  <div className="flex justify-between items-center w-full">
+                    <div>
+                      <span>{item.name}</span>
+                      <p className="text-xs text-muted-foreground">{new Date(item.start_date).toLocaleDateString()} - {new Date(item.end_date).toLocaleDateString()}</p>
+                    </div>
+                     <Switch
+                        checked={item.is_active}
+                        onCheckedChange={(checked) => handleToggleActive(item.id, checked)}
+                        aria-label={`Activate ${item.name}`}
+                      />
                   </div>
                 )}
                 isLoading={isLoading}
