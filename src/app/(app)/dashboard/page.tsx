@@ -75,6 +75,11 @@ export default function DashboardPage() {
     setViewAllData(data.map(item => ({ key: item.id || item.tenant_id, content: renderItem(item) })));
     setIsViewAllOpen(true);
   };
+  
+  const getTenantName = (tenantId: number) => {
+    const tenant = tenants.find(t => t.tenant_id === tenantId);
+    return tenant ? tenant.name : 'N/A';
+  };
 
 
   if (!isClient) {
@@ -166,7 +171,9 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center w-full">
                     <div>
                       <span>{item.name}</span>
-                      <p className="text-xs text-muted-foreground">Rs {item.selling_price.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {getTenantName(item.tenant_id)} • Rs {item.selling_price.toFixed(2)}
+                      </p>
                     </div>
                     <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md">Stock: {item.stock}</span>
                   </div>
