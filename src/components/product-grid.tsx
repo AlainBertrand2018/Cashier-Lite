@@ -10,11 +10,27 @@ import AddProductDialog from './add-product-dialog';
 import { Skeleton } from './ui/skeleton';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
+const getIconForProduct = (productName: string): string | undefined => {
+  const name = productName.toLowerCase();
+  if (name.includes('early tickets')) {
+    return '/images/ticket.svg';
+  }
+  if (name.includes('concert tickets')) {
+    return '/images/ticket_001.svg';
+  }
+  if (name.includes('non-alcoholics')) {
+    return '/images/NAD.svg';
+  }
+  return undefined;
+};
 
 function ProductCard({ product }: { product: Product }) {
   const { addProductToOrder, activeAdmin } = useStore();
   const needsReorder = product.initial_stock > 0 && product.stock <= product.initial_stock * 0.1;
   const isOutOfStock = product.stock <= 0;
+  const iconSrc = getIconForProduct(product.name);
 
   return (
     <Card 
@@ -24,7 +40,7 @@ function ProductCard({ product }: { product: Product }) {
         )}
       onClick={() => !activeAdmin && !isOutOfStock && addProductToOrder(product)}
     >
-        <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center">
+        <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center gap-2">
             <Badge 
             variant={needsReorder ? 'destructive' : 'secondary'} 
             className={cn(
@@ -35,7 +51,8 @@ function ProductCard({ product }: { product: Product }) {
             >
             {isOutOfStock ? 'Out of Stock' : `${product.stock} left`}
             </Badge>
-            <p className="text-lg font-semibold mt-4">{product.name}</p>
+            {iconSrc && activeAdmin && <Image src={iconSrc} alt={product.name} width={48} height={48} />}
+            <p className="text-lg font-semibold">{product.name}</p>
             <p className="text-xl font-bold mt-1">Rs {product.selling_price.toFixed(2)}</p>
         </CardContent>
     </Card>
