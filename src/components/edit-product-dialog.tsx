@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,6 +33,8 @@ import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { Separator } from './ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -60,13 +61,15 @@ interface EditProductDialogProps {
 }
 
 export default function EditProductDialog({ isOpen, onOpenChange, product }: EditProductDialogProps) {
-  const { editProduct, productTypes, fetchProductTypes } = useStore((state) => ({
+  const { editProduct, productTypes, fetchProductTypes, addStock } = useStore((state) => ({
     editProduct: state.editProduct,
     productTypes: state.productTypes,
     fetchProductTypes: state.fetchProductTypes,
+    addStock: state.addStock,
   }));
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addStockQuantity, setAddStockQuantity] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -107,6 +110,21 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
     onOpenChange(false);
   }
 
+  const handleAddStock = async () => {
+    if (addStockQuantity > 0) {
+      setIsSubmitting(true);
+      await addStock(product.id, addStockQuantity);
+      setIsSubmitting(false);
+      toast({
+        title: 'Stock Added',
+        description: `${addStockQuantity} units added to "${product.name}".`,
+      });
+      setAddStockQuantity(0);
+      onOpenChange(false);
+    }
+  };
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -117,7 +135,7 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
              <FormField
               control={form.control}
               name="name"
@@ -188,11 +206,11 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
               name="stock"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Stock</FormLabel>
+                  <FormLabel>Current Total Stock</FormLabel>
                   <FormControl>
                     <Input type="number" step="1" {...field} />
                   </FormControl>
-                  <FormMessage />
+                   <FormMessage />
                 </FormItem>
               )}
             />
@@ -206,6 +224,24 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
             </DialogFooter>
           </form>
         </Form>
+        <Separator />
+         <div className="space-y-2">
+            <h4 className="font-medium">Add New Stock</h4>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                placeholder="Quantity to add"
+                value={addStockQuantity || ''}
+                onChange={(e) => setAddStockQuantity(parseInt(e.target.value, 10) || 0)}
+                className="flex-1"
+                disabled={isSubmitting}
+              />
+              <Button onClick={handleAddStock} disabled={isSubmitting || addStockQuantity <= 0}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Stock
+              </Button>
+            </div>
+          </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { create } from 'zustand';
@@ -46,6 +45,7 @@ interface AppState {
   deleteTenant: (tenantId: number) => Promise<void>;
   addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
   editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id'>>) => Promise<void>;
+  addStock: (productId: string, quantity: number) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
@@ -281,6 +281,12 @@ export const useStore = create<AppState>()(
             console.log("Admin cannot add products to order.");
             return;
         }
+        
+        if (product.stock <= 0) {
+            console.warn(`Product "${product.name}" is out of stock.`);
+            // Optionally, add a user-facing notification here (toast)
+            return;
+        }
 
         if (currentOrder.length > 0 && currentOrder[0].tenant_id !== product.tenant_id) {
           console.error("Cannot add products from different tenants to the same order.");
@@ -346,7 +352,7 @@ export const useStore = create<AppState>()(
       },
       
       completeOrder: async () => {
-        const { currentOrder, selectedTenantId, activeShift } = get();
+        const { currentOrder, selectedTenantId, activeShift, fetchProducts } = get();
         if (currentOrder.length === 0 || !selectedTenantId || !activeShift) return;
 
         const subtotal = currentOrder.reduce(
@@ -368,6 +374,25 @@ export const useStore = create<AppState>()(
           createdAt: Date.now(),
         };
 
+        // --- Real-time Stock Deduction ---
+        if (supabase) {
+          for (const item of newOrder.items) {
+            const { error: decrementError } = await supabase.rpc('decrement_product_stock', {
+              p_product_id: item.id,
+              p_quantity_sold: item.quantity,
+            });
+            if (decrementError) {
+              console.error(`Failed to decrement stock for product ${item.id}:`, decrementError);
+              // Decide on error handling: proceed with order anyway, or fail?
+              // For now, we log the error and continue.
+            }
+          }
+           // After decrementing, refetch products to update UI stock levels
+           await fetchProducts(selectedTenantId);
+        }
+        // --- End Stock Deduction ---
+
+
         let isSynced = false;
         if (supabase) {
             let orderToInsert: any = {
@@ -382,23 +407,10 @@ export const useStore = create<AppState>()(
             };
             
             let { error: orderError } = await supabase.from('orders').insert(orderToInsert);
-
-            // This is a resilience check. If the schema cache is stale and doesn't know about
-            // the new cashier_id or station_id columns, it will fail. We can retry without them.
-            if (orderError) {
-                const isSchemaCacheError = orderError.message.includes("does not exist") || orderError.message.includes("Could not find the");
-                
-                if (isSchemaCacheError) {
-                    console.warn("Schema cache might be stale. Retrying insert without station/cashier ID.", orderError.message);
-                    delete orderToInsert.cashier_id;
-                    delete orderToInsert.station_id;
-                    const retryResult = await supabase.from('orders').insert(orderToInsert);
-                    orderError = retryResult.error;
-                }
-            }
             
-
-            if (!orderError) {
+            if (orderError) {
+                console.error("Error saving order, will sync later:", JSON.stringify(orderError, null, 2));
+            } else {
                 const orderItemsToInsert = newOrder.items.map(item => ({
                     order_id: newOrder.id,
                     product_id: item.id,
@@ -411,8 +423,6 @@ export const useStore = create<AppState>()(
                 } else {
                     console.error("Error saving order items, will sync later:", JSON.stringify(itemsError, null, 2));
                 }
-            } else {
-                 console.error("Error saving order, will sync later:", JSON.stringify(orderError, null, 2));
             }
         }
         
@@ -536,6 +546,26 @@ export const useStore = create<AppState>()(
         }
       },
 
+      addStock: async (productId: string, quantity: number) => {
+        if (!supabase || quantity <= 0) {
+          return;
+        }
+         const { data, error } = await supabase.rpc('increment_product_stock', {
+            p_product_id: productId,
+            p_quantity_added: quantity,
+        });
+
+        if (error) {
+            console.error('Error adding stock:', error);
+            return;
+        }
+
+        const product = get().products.find(p => p.id === productId);
+        if (product) {
+            await get().fetchProducts(product.tenant_id);
+        }
+      },
+
       deleteProduct: async (productId: string) => {
         const { products } = get();
         const productToDelete = products.find(p => p.id === productId);
@@ -625,5 +655,3 @@ export const useStore = create<AppState>()(
     }
   )
 );
-
-    

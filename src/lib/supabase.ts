@@ -1,5 +1,4 @@
 
-
 import { createClient, User } from '@supabase/supabase-js'
 import type { Tenant, Product, Order } from './types';
 
@@ -146,7 +145,22 @@ export type Database = {
         };
       }
     }
-    Functions: {}
+    Functions: {
+      decrement_product_stock: {
+        Args: {
+          p_product_id: string;
+          p_quantity_sold: number;
+        };
+        Returns: undefined;
+      };
+      increment_product_stock: {
+        Args: {
+          p_product_id: string;
+          p_quantity_added: number;
+        };
+        Returns: undefined;
+      };
+    }
     Enums: {}
   }
 }

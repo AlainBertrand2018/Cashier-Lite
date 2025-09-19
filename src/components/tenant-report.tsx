@@ -25,9 +25,12 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
     const unitsSold = orders.flatMap(o => o.items)
                             .filter(item => item.id === product.id)
                             .reduce((sum, item) => sum + item.quantity, 0);
-    const unitsLeft = product.stock - unitsSold;
-    const reorderThreshold = product.stock * 0.25;
-    const needsReorder = unitsLeft <= reorderThreshold;
+    // Note: product.stock here represents the current stock from the database, not initial stock.
+    const unitsLeft = product.stock; 
+    const initialStock = product.stock + unitsSold; // Infer initial stock for this session
+    const reorderThreshold = initialStock * 0.10;
+    const needsReorder = initialStock > 0 && unitsLeft <= reorderThreshold;
+
 
     return {
       ...product,
