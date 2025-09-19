@@ -41,6 +41,7 @@ interface AppState {
   setSelectedTenantId: (tenantId: number | null) => void;
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
+  deleteTenant: (tenantId: number) => Promise<void>;
   addProduct: (name: string, price: number, tenant_id: number) => Promise<Product | null>;
   editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
@@ -430,6 +431,38 @@ export const useStore = create<AppState>()(
         await get().fetchTenants(true);
 
         return data?.tenant_id || null;
+      },
+
+      deleteTenant: async (tenantId: number) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot delete tenant.');
+          return;
+        }
+
+        // First, delete all products associated with the tenant
+        const { error: productError } = await supabase
+          .from('products')
+          .delete()
+          .eq('tenant_id', tenantId);
+
+        if (productError) {
+          console.error(`Error deleting products for tenant ${tenantId}:`, productError);
+          // Depending on requirements, you might want to stop here
+        }
+
+        // Then, delete the tenant
+        const { error: tenantError } = await supabase
+          .from('tenants')
+          .delete()
+          .eq('tenant_id', tenantId);
+
+        if (tenantError) {
+          console.error(`Error deleting tenant ${tenantId}:`, tenantError);
+          return;
+        }
+
+        // Refresh the tenants list in the store
+        await get().fetchTenants(true);
       },
       
       addProduct: async (name, price, tenant_id) => {

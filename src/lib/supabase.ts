@@ -1,6 +1,6 @@
 
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, User } from '@supabase/supabase-js'
 import type { Tenant, Product, Order } from './types';
 
 export type Database = {
