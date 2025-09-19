@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
 import UnifiedProductView from '@/components/unified-product-view';
 import OrderSummary from '@/components/order-summary';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import ConfirmTenantSwitchDialog from '@/components/confirm-tenant-switch-dialog';
 import ReceiptDialog from '@/components/receipt-dialog';
 import { useRouter } from 'next/navigation';
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <CardTitle>Category Management</CardTitle>
-                                <p className="text-sm text-muted-foreground">Assign which cashier roles can see which product categories.</p>
+                                <CardDescription>Assign which cashier roles can see which product categories.</CardDescription>
                             </div>
                         </div>
                         <Button variant="outline" onClick={() => setIsManageCategoriesOpen(true)}>

@@ -54,18 +54,14 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
     switch (categoryName.toLowerCase()) {
       case 'non-alcoholics':
         return '/images/NAD.svg';
-      case 'early tickets':
+      case 'ticketing':
         return '/images/ticket.svg';
-      case 'concert tickets':
-        return '/images/ticket_001.svg';
       case 'beer':
         return '/images/beer.svg';
       case 'wine':
         return '/images/wine-glass.svg';
       case 'spirit':
         return '/images/cocktail.svg';
-      case 'ticketing': // Fallback for general ticketing
-        return '/images/ticket.svg';
       default:
         return '/images/foodstuff.svg';
     }
@@ -92,13 +88,15 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
 }
 
 export default function UnifiedProductView() {
-  const { products, productTypes, tenants, fetchProductTypes, fetchTenants } = useStore();
+  const { products, productTypes, tenants, fetchProductTypes, fetchTenants, activeShift } = useStore();
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchProductTypes();
+    if (activeShift) {
+        fetchProductTypes(activeShift.role);
+    }
     fetchTenants();
-  }, [fetchProductTypes, fetchTenants]);
+  }, [fetchProductTypes, fetchTenants, activeShift]);
 
   const selectedCategory = useMemo(() => {
     if (!selectedTypeId) return null;
