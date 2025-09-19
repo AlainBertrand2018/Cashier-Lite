@@ -161,7 +161,7 @@ export const useStore = create<AppState>()(
         }
 
         if (cashier.pin !== pin) {
-          console.error('Invalid PIN');
+          console.warn('Invalid PIN');
           return false;
         }
         
@@ -625,3 +625,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    
