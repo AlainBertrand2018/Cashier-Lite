@@ -36,15 +36,21 @@ const cashierFormSchema = z.object({
   floatAmount: z.coerce.number().min(0, { message: 'Float must be a positive number.' }),
 });
 
-const adminFormSchema = z.object({
+const adminLoginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(1, { message: 'Password cannot be empty.' }),
 });
 
+const adminSignUpSchema = z.object({
+    email: z.string().email({ message: 'Please enter a valid email.' }),
+    password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+});
+
 export default function LoginForm() {
-  const { cashiers, fetchCashiers, startShift, adminLogin } = useStore();
+  const { cashiers, fetchCashiers, startShift, adminLogin, adminSignUp } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminTab, setAdminTab] = useState('login');
 
   useEffect(() => {
     fetchCashiers(true);
@@ -59,8 +65,16 @@ export default function LoginForm() {
     },
   });
 
-  const adminForm = useForm<z.infer<typeof adminFormSchema>>({
-    resolver: zodResolver(adminFormSchema),
+  const adminLoginForm = useForm<z.infer<typeof adminLoginSchema>>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const adminSignUpForm = useForm<z.infer<typeof adminSignUpSchema>>({
+    resolver: zodResolver(adminSignUpSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -87,9 +101,9 @@ export default function LoginForm() {
     }
   }
 
-  async function onAdminSubmit(values: z.infer<typeof adminFormSchema>) {
+  async function onAdminLoginSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
-    const success = await adminLogin(values.email, values.password);
+    const { success, error } = await adminLogin(values.email, values.password);
     setIsSubmitting(false);
 
     if (success) {
@@ -101,11 +115,34 @@ export default function LoginForm() {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid email or password.',
+        description: error || 'Invalid email or password.',
       });
-      adminForm.setError('password', { message: 'Invalid credentials' });
+      adminLoginForm.setError('password', { message: 'Invalid credentials' });
     }
   }
+
+   async function onAdminSignUpSubmit(values: z.infer<typeof adminSignUpSchema>) {
+    setIsSubmitting(true);
+    const { success, error } = await adminSignUp(values.email, values.password);
+    setIsSubmitting(false);
+
+    if (success) {
+      toast({
+        title: 'Sign Up Successful',
+        description: 'Please check your email to confirm your account.',
+      });
+      adminSignUpForm.reset();
+      setAdminTab('login');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description: error || 'Could not create account. Please try again.',
+      });
+      adminSignUpForm.setError('email', { message: error || 'Sign up failed' });
+    }
+  }
+
 
   return (
     <Card>
@@ -175,41 +212,85 @@ export default function LoginForm() {
               </form>
             </Form>
           </TabsContent>
-          <TabsContent value="admin" className="p-6">
-             <Form {...adminForm}>
-                <form onSubmit={adminForm.handleSubmit(onAdminSubmit)} className="space-y-6">
-                    <FormField
-                    control={adminForm.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                            <Input placeholder="admin@fids.mu" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={adminForm.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSubmitting ? 'Logging In...' : 'Admin Login'}
-                    </Button>
-                </form>
-            </Form>
+          <TabsContent value="admin" className="p-0">
+             <Tabs defaultValue="login" value={adminTab} onValueChange={setAdminTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+                 <TabsContent value="login" className="p-6">
+                    <Form {...adminLoginForm}>
+                        <form onSubmit={adminLoginForm.handleSubmit(onAdminLoginSubmit)} className="space-y-6">
+                            <FormField
+                            control={adminLoginForm.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="admin@fids.mu" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                            control={adminLoginForm.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isSubmitting ? 'Signing In...' : 'Sign In'}
+                            </Button>
+                        </form>
+                    </Form>
+                </TabsContent>
+                <TabsContent value="signup" className="p-6">
+                     <Form {...adminSignUpForm}>
+                        <form onSubmit={adminSignUpForm.handleSubmit(onAdminSignUpSubmit)} className="space-y-6">
+                            <FormField
+                            control={adminSignUpForm.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="admin@fids.mu" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                            control={adminSignUpForm.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                            </Button>
+                        </form>
+                    </Form>
+                </TabsContent>
+             </Tabs>
           </TabsContent>
         </Tabs>
       </CardContent>

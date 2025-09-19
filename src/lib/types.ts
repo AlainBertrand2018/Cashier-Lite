@@ -52,5 +52,6 @@ export interface ActiveShift {
 }
 
 export interface ActiveAdmin {
+    id: string;
     email: string;
 }

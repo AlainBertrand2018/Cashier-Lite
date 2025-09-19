@@ -25,7 +25,8 @@ interface AppState {
 
   startShift: (cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
   logoutShift: () => void;
-  adminLogin: (email: string, password: string) => Promise<boolean>;
+  adminLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  adminSignUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   adminLogout: () => void;
 
 
@@ -180,21 +181,52 @@ export const useStore = create<AppState>()(
       },
 
       adminLogin: async (email, password) => {
-        // In a real app, you'd verify against a database.
-        // For this demo, we use hardcoded credentials.
-        if (email === 'admin@fids.mu' && password === 'fidsadmin') {
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured.' };
+        }
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        if (data.user) {
             set({
-                activeAdmin: { email },
+                activeAdmin: { id: data.user.id, email: data.user.email || '' },
                 activeShift: null,
                 selectedTenantId: null,
                 currentOrder: [],
             });
-            return true;
+            return { success: true };
         }
-        return false;
+
+        return { success: false, error: 'An unknown error occurred.' };
+      },
+      
+      adminSignUp: async (email, password) => {
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured.' };
+        }
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+        
+        return { success: true };
       },
 
-      adminLogout: () => {
+
+      adminLogout: async () => {
+        if (supabase) {
+            await supabase.auth.signOut();
+        }
         set({ activeAdmin: null });
       },
 
@@ -326,9 +358,9 @@ export const useStore = create<AppState>()(
             
             let { error: orderError } = await supabase.from('orders').insert(orderToInsert);
 
+            // This is a resilience check. If the schema cache is stale and doesn't know about
+            // the new cashier_id or station_id columns, it will fail. We can retry without them.
             if (orderError) {
-                // This is a resilience check. If the schema cache is stale and doesn't know about
-                // the new cashier_id or station_id columns, it will fail. We can retry without them.
                 const isSchemaCacheError = orderError.message.includes("does not exist") || orderError.message.includes("Could not find the");
                 
                 if (isSchemaCacheError) {
@@ -547,5 +579,3 @@ export const useStore = create<AppState>()(
     }
   )
 );
-
-    
