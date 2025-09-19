@@ -24,14 +24,14 @@ import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import type { Cashier, Event } from '@/lib/types';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import type { Cashier } from '@/lib/types';
 import { Card, CardContent } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 
 const cashierFormSchema = z.object({
-  eventId: z.string().min(1, { message: 'Please select an event.' }),
   cashierId: z.string().min(1, { message: 'Please select a cashier.' }),
   pin: z.string().length(4, { message: 'PIN must be 4 digits.' }),
   floatAmount: z.coerce.number().min(0, { message: 'Float must be a positive number.' }),
@@ -48,20 +48,19 @@ const adminSignUpSchema = z.object({
 });
 
 export default function LoginForm() {
-  const { cashiers, events, fetchCashiers, fetchEvents, startShift, adminLogin, adminSignUp } = useStore();
+  const { cashiers, fetchCashiers, fetchEvents, activeEvent, startShift, adminLogin, adminSignUp } = useStore();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminTab, setAdminTab] = useState('login');
 
   useEffect(() => {
     fetchCashiers(true);
-    fetchEvents(true);
+    fetchEvents(true); // Fetches all events and finds the active one
   }, [fetchCashiers, fetchEvents]);
 
   const cashierForm = useForm<z.infer<typeof cashierFormSchema>>({
     resolver: zodResolver(cashierFormSchema),
     defaultValues: {
-      eventId: '',
       cashierId: '',
       pin: '',
       floatAmount: 0,
@@ -85,8 +84,17 @@ export default function LoginForm() {
   });
 
   async function onCashierSubmit(values: z.infer<typeof cashierFormSchema>) {
+    if (!activeEvent) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'No active event has been set by an administrator.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    const success = await startShift(parseInt(values.eventId, 10), values.cashierId, values.pin, values.floatAmount);
+    const success = await startShift(activeEvent.id, values.cashierId, values.pin, values.floatAmount);
     setIsSubmitting(false);
 
     if (success) {
@@ -145,24 +153,8 @@ export default function LoginForm() {
       adminSignUpForm.setError('email', { message: error || 'Sign up failed' });
     }
   }
-
-  // Filter events to show only current and future ones for cashiers
-  const [today, setToday] = useState<Date | null>(null);
-  useEffect(() => {
-    // This ensures the date is only calculated on the client-side
-    const date = new Date();
-    date.setHours(0, 0, 0, 0); // Normalize to the beginning of the day
-    setToday(date);
-  }, []);
-
-  const filteredEvents = today 
-    ? events.filter((event: Event) => {
-        // Parse date string as YYYY-MM-DD to avoid timezone issues
-        const [year, month, day] = event.end_date.split('-').map(Number);
-        const eventEndDate = new Date(year, month - 1, day);
-        return eventEndDate >= today;
-      })
-    : [];
+  
+  const isCashierLoginDisabled = !activeEvent || isSubmitting;
 
 
   return (
@@ -174,88 +166,81 @@ export default function LoginForm() {
             <TabsTrigger value="admin">Admin Login</TabsTrigger>
           </TabsList>
           <TabsContent value="cashier" className="p-6">
-             <Form {...cashierForm}>
-              <form onSubmit={cashierForm.handleSubmit(onCashierSubmit)} className="space-y-6">
-                <FormField
-                  control={cashierForm.control}
-                  name="eventId"
-                  render={({ field }) => (
+             {!activeEvent ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No Active Event</AlertTitle>
+                  <AlertDescription>
+                    An administrator has not set an active event. Cashier login is disabled.
+                  </AlertDescription>
+                </Alert>
+             ) : (
+                <Form {...cashierForm}>
+                  <form onSubmit={cashierForm.handleSubmit(onCashierSubmit)} className="space-y-6">
                     <FormItem>
-                      <FormLabel>Event</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an event to begin" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredEvents.map((event: Event) => (
-                            <SelectItem key={event.id} value={String(event.id)}>
-                              {event.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={cashierForm.control}
-                  name="cashierId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cashier Name</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a cashier to login" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cashiers.map((cashier: Cashier) => (
-                            <SelectItem key={cashier.id} value={cashier.id}>
-                              {cashier.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={cashierForm.control}
-                  name="pin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>4-Digit PIN</FormLabel>
+                      <FormLabel>Active Event</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="****" {...field} maxLength={4} />
+                        <Input readOnly value={activeEvent.name} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={cashierForm.control}
-                  name="floatAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Starting Float (Rs)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isSubmitting ? 'Logging In...' : 'Start Shift & Login'}
-                </Button>
-              </form>
-            </Form>
+                    
+                    <FormField
+                      control={cashierForm.control}
+                      name="cashierId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cashier Name</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isCashierLoginDisabled}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a cashier to login" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {cashiers.map((cashier: Cashier) => (
+                                <SelectItem key={cashier.id} value={cashier.id}>
+                                  {cashier.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={cashierForm.control}
+                      name="pin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>4-Digit PIN</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="****" {...field} maxLength={4} disabled={isCashierLoginDisabled}/>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={cashierForm.control}
+                      name="floatAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Starting Float (Rs)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} disabled={isCashierLoginDisabled} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={isCashierLoginDisabled}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isSubmitting ? 'Logging In...' : 'Start Shift & Login'}
+                    </Button>
+                  </form>
+                </Form>
+             )}
           </TabsContent>
           <TabsContent value="admin" className="p-0">
              <Tabs defaultValue="login" value={adminTab} onValueChange={setAdminTab} className="w-full">

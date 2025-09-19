@@ -1,5 +1,4 @@
 
-
 export interface Event {
   id: number;
   created_at: string;
@@ -8,6 +7,7 @@ export interface Event {
   end_date: string;
   venue?: string;
   event_manager?: string;
+  is_active: boolean;
 }
 
 export interface ProductType {

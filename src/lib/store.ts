@@ -12,6 +12,7 @@ interface AppState {
   productTypes: ProductType[];
   cashiers: Cashier[];
   events: Event[];
+  activeEvent: Event | null;
   currentOrder: OrderItem[];
   completedOrders: Order[];
   lastCompletedOrder: Order | null;
@@ -54,7 +55,8 @@ interface AppState {
   getActiveEvent: () => Event | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
   setReportingDone: (isDone: boolean) => void;
-  createEvent: (eventData: Omit<Event, 'id' | 'created_at'>) => Promise<boolean>;
+  createEvent: (eventData: Omit<Event, 'id' | 'created_at' | 'is_active'>) => Promise<boolean>;
+  setActiveEvent: (eventId: number) => Promise<void>;
 }
 
 export const useStore = create<AppState>()(
@@ -65,6 +67,7 @@ export const useStore = create<AppState>()(
       productTypes: [],
       cashiers: [],
       events: [],
+      activeEvent: null,
       currentOrder: [],
       completedOrders: [],
       lastCompletedOrder: null,
@@ -155,7 +158,7 @@ export const useStore = create<AppState>()(
           console.log("Supabase not configured. Skipping fetchEvents.");
           return;
         }
-        if (!force && get().events.length > 0) {
+        if (!force && get().events.length > 0 && get().activeEvent) {
           return;
         }
         const { data, error } = await supabase.from('events').select().order('start_date', { ascending: false });
@@ -163,7 +166,8 @@ export const useStore = create<AppState>()(
           console.error('Error fetching events:', error);
           return;
         }
-        set({ events: data || [] });
+        const activeEvent = data?.find(e => e.is_active) || null;
+        set({ events: data || [], activeEvent });
       },
       
       startShift: async (eventId: number, cashierId: string, pin: string, floatAmount: number) => {
@@ -701,7 +705,7 @@ export const useStore = create<AppState>()(
         set({ isReportingDone: isDone });
       },
 
-      createEvent: async (eventData: Omit<Event, 'id' | 'created_at'>) => {
+      createEvent: async (eventData) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot create event.');
           return false;
@@ -715,6 +719,19 @@ export const useStore = create<AppState>()(
         return true;
       },
 
+      setActiveEvent: async (eventId: number) => {
+        if (!supabase) {
+            console.error('Supabase not configured. Cannot set active event.');
+            return;
+        }
+        const { error } = await supabase.rpc('set_active_event', { event_id_to_set: eventId });
+        if (error) {
+            console.error('Error setting active event:', error);
+            return;
+        }
+        await get().fetchEvents(true); // Force refresh to get the latest active state
+      },
+
     }),
     {
       name: 'fids-cashier-lite-storage',
@@ -725,10 +742,9 @@ export const useStore = create<AppState>()(
         activeShift: state.activeShift,
         activeAdmin: state.activeAdmin,
         isReportingDone: state.isReportingDone,
-        events: state.events
+        events: state.events,
+        activeEvent: state.activeEvent
       }),
     }
   )
 );
-
-    

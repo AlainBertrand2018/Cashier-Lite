@@ -14,6 +14,7 @@ export type Database = {
           end_date: string;
           venue: string | null;
           event_manager: string | null;
+          is_active: boolean;
         };
         Insert: {
           name: string;
@@ -21,6 +22,7 @@ export type Database = {
           end_date: string;
           venue?: string | null;
           event_manager?: string | null;
+          is_active?: boolean;
         };
       };
       tenants: {
@@ -182,6 +184,12 @@ export type Database = {
         Args: {
           p_product_id: string;
           p_quantity_added: number;
+        };
+        Returns: undefined;
+      };
+      set_active_event: {
+        Args: {
+          event_id_to_set: number;
         };
         Returns: undefined;
       };
