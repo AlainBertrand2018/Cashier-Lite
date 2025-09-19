@@ -20,22 +20,40 @@ export type Database = {
         Insert: Omit<Tenant, 'tenant_id' | 'created_at'>;
         Update: Partial<Omit<Tenant, 'tenant_id' | 'created_at'>>;
       },
+      product_types: {
+        Row: {
+          id: number;
+          name: string;
+        };
+        Insert: {
+          name: string;
+        };
+      },
       products: {
         Row: {
             id: string; // uuid
             name: string;
-            price: number;
+            selling_price: number;
+            buying_price: number;
+            stock: number;
+            product_type_id: number | null;
             tenant_id: number;
             created_at: string;
         };
         Insert: {
             name: string;
-            price: number;
+            selling_price: number;
+            buying_price: number;
+            stock: number;
+            product_type_id: number | null;
             tenant_id: number;
         };
         Update: Partial<{
             name: string;
-            price: number;
+            selling_price: number;
+            buying_price: number;
+            stock: number;
+            product_type_id: number | null;
         }>;
       },
       cashiers: {

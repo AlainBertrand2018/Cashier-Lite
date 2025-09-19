@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +22,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
@@ -31,8 +39,17 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: 'Product name must be at least 2 characters.',
   }),
-  price: z.coerce.number().min(0, {
-    message: 'Price must be a positive number.',
+  product_type_id: z.coerce.number().min(1, {
+    message: 'Please select a product type.',
+  }),
+  buying_price: z.coerce.number().min(0, {
+    message: 'Buying price must be a positive number.',
+  }),
+  selling_price: z.coerce.number().min(0, {
+    message: 'Selling price must be a positive number.',
+  }),
+  stock: z.coerce.number().int().min(0, {
+    message: 'Stock must be a positive integer.',
   }),
 });
 
@@ -43,22 +60,38 @@ interface EditProductDialogProps {
 }
 
 export default function EditProductDialog({ isOpen, onOpenChange, product }: EditProductDialogProps) {
-  const editProduct = useStore((state) => state.editProduct);
+  const { editProduct, productTypes, fetchProductTypes } = useStore((state) => ({
+    editProduct: state.editProduct,
+    productTypes: state.productTypes,
+    fetchProductTypes: state.fetchProductTypes,
+  }));
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchProductTypes();
+    }
+  }, [isOpen, fetchProductTypes]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product.name,
-      price: product.price,
+      product_type_id: product.product_type_id || 0,
+      buying_price: product.buying_price,
+      selling_price: product.selling_price,
+      stock: product.stock,
     },
   });
 
   useEffect(() => {
     form.reset({
-        name: product.name,
-        price: product.price
+      name: product.name,
+      product_type_id: product.product_type_id || 0,
+      buying_price: product.buying_price,
+      selling_price: product.selling_price,
+      stock: product.stock,
     });
   }, [product, form]);
 
@@ -76,7 +109,7 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
           <DialogDescription>
@@ -84,8 +117,8 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
@@ -98,14 +131,66 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
-              name="price"
+              name="product_type_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (Rs)</FormLabel>
+                  <FormLabel>Product Type</FormLabel>
+                   <Select onValueChange={field.onChange} value={String(field.value || '')}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {productTypes.map((type) => (
+                        <SelectItem key={type.id} value={String(type.id)}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
+                name="buying_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Buying Price (Rs)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="selling_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Selling Price (Rs)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                    <Input type="number" step="1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

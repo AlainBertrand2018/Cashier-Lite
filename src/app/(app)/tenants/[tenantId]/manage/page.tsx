@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -33,14 +34,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import EditProductDialog from '@/components/edit-product-dialog';
-import type { Product } from '@/lib/types';
+import type { Product, ProductType } from '@/lib/types';
 import AddProductDialog from '@/components/add-product-dialog';
 
 export default function ManageProductsPage() {
   const params = useParams();
   const router = useRouter();
   const tenantId = parseInt(params.tenantId as string, 10);
-  const { products, deleteProduct, getTenantById, fetchTenants, fetchProducts, setSelectedTenantId } = useStore();
+  const { products, productTypes, deleteProduct, getTenantById, fetchTenants, fetchProducts, fetchProductTypes, setSelectedTenantId } = useStore();
   
   const [tenantName, setTenantName] = useState('Tenant');
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -53,11 +54,12 @@ export default function ManageProductsPage() {
         setIsLoading(true);
         await fetchTenants();
         await fetchProducts(tenantId);
+        await fetchProductTypes();
         setSelectedTenantId(tenantId);
         setIsLoading(false);
     }
     loadData();
-  }, [tenantId, fetchTenants, fetchProducts, setSelectedTenantId]);
+  }, [tenantId, fetchTenants, fetchProducts, fetchProductTypes, setSelectedTenantId]);
   
   const tenant = getTenantById(tenantId);
   
@@ -70,6 +72,10 @@ export default function ManageProductsPage() {
   const tenantProducts = products.filter(
     (p) => p.tenant_id === tenantId
   );
+
+  const getProductTypeName = (typeId: number | null) => {
+    return productTypes.find(pt => pt.id === typeId)?.name || 'N/A';
+  }
 
   const handleDelete = async () => {
     if (productToDelete) {
@@ -110,14 +116,17 @@ export default function ManageProductsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Product Name</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Buying Price</TableHead>
+                <TableHead className="text-right">Selling Price</TableHead>
+                <TableHead className="text-right">Stock</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                  <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Loading products...
                   </TableCell>
                 </TableRow>
@@ -125,7 +134,10 @@ export default function ManageProductsPage() {
                 tenantProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>Rs {product.price.toFixed(2)}</TableCell>
+                    <TableCell>{getProductTypeName(product.product_type_id)}</TableCell>
+                    <TableCell className="text-right font-mono">Rs {product.buying_price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono">Rs {product.selling_price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{product.stock}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" className="mr-2" onClick={() => setProductToEdit(product)}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
@@ -138,7 +150,7 @@ export default function ManageProductsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No products found for this tenant.
                   </TableCell>
                 </TableRow>

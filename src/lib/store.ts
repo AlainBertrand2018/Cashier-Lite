@@ -4,12 +4,13 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin } from './types';
+import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdmin, ProductType } from './types';
 import { supabase } from './supabase';
 
 interface AppState {
   tenants: Tenant[];
   products: Product[];
+  productTypes: ProductType[];
   cashiers: Cashier[];
   currentOrder: OrderItem[];
   completedOrders: Order[];
@@ -21,6 +22,7 @@ interface AppState {
 
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
+  fetchProductTypes: () => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
 
   startShift: (cashierId: string, pin: string, floatAmount: number) => Promise<boolean>;
@@ -42,8 +44,8 @@ interface AppState {
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   deleteTenant: (tenantId: number) => Promise<void>;
-  addProduct: (name: string, price: number, tenant_id: number) => Promise<Product | null>;
-  editProduct: (productId: string, data: { name: string; price: number }) => Promise<void>;
+  addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
+  editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id'>>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
@@ -55,6 +57,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       tenants: [],
       products: [],
+      productTypes: [],
       cashiers: [],
       currentOrder: [],
       completedOrders: [],
@@ -108,6 +111,21 @@ export const useStore = create<AppState>()(
           return;
         }
         set({ products: data || [] });
+      },
+
+      fetchProductTypes: async () => {
+         if (!supabase) {
+          console.log("Supabase not configured. Skipping fetchProductTypes.");
+          return;
+        }
+        if (get().productTypes.length > 0) return;
+
+        const { data, error } = await supabase.from('product_types').select('*');
+        if (error) {
+          console.error('Error fetching product types:', error);
+          return;
+        }
+        set({ productTypes: data || [] });
       },
 
        fetchCashiers: async (force = false) => {
@@ -284,7 +302,13 @@ export const useStore = create<AppState>()(
             ),
           });
         } else {
-          set({ currentOrder: [...currentOrder, { ...product, quantity: 1 }] });
+          set({ currentOrder: [...currentOrder, { 
+            id: product.id, 
+            name: product.name, 
+            price: product.selling_price, 
+            quantity: 1,
+            tenant_id: product.tenant_id
+          }] });
         }
       },
 
@@ -465,26 +489,20 @@ export const useStore = create<AppState>()(
         await get().fetchTenants(true);
       },
       
-      addProduct: async (name, price, tenant_id) => {
+      addProduct: async (productData) => {
         if (!supabase) {
           console.error('Supabase not configured. Cannot add product.');
           return null;
         }
 
-        const productToInsert = {
-            name,
-            price: Number(price),
-            tenant_id,
-        };
-
         const { data, error } = await supabase
           .from('products')
-          .insert(productToInsert)
+          .insert(productData)
           .select()
           .single();
 
         if (error) {
-          console.error('Error adding product:', error, 'Object sent:', productToInsert);
+          console.error('Error adding product:', error, 'Object sent:', productData);
           return null;
         }
         
@@ -501,14 +519,9 @@ export const useStore = create<AppState>()(
           return;
         }
 
-        const productToUpdate = {
-            name: productData.name,
-            price: Number(productData.price),
-        };
-
         const { data, error } = await supabase
           .from('products')
-          .update(productToUpdate)
+          .update(productData)
           .eq('id', productId)
           .select()
           .single();

@@ -1,9 +1,17 @@
 
 
+export interface ProductType {
+  id: number;
+  name: string;
+}
+
 export interface Product {
   id: string;
   name: string;
-  price: number;
+  selling_price: number;
+  buying_price: number;
+  stock: number;
+  product_type_id: number | null;
   tenant_id: number;
   created_at?: string;
 }
@@ -26,9 +34,14 @@ export interface Cashier {
     pin?: string;
 }
 
-export interface OrderItem extends Product {
+export interface OrderItem {
+  id: string;
+  name: string;
+  price: number; // This remains 'price' for the context of an order line item
   quantity: number;
+  tenant_id: number;
 }
+
 
 export interface Order {
   id: string;

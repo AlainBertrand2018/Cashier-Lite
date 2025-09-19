@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +19,7 @@ function ProductCard({ product }: { product: Product }) {
     >
       <CardContent className="flex-grow p-4 flex flex-col justify-center items-center text-center">
         <p className="text-lg font-semibold">{product.name}</p>
-        <p className="text-xl font-bold mt-1">Rs {product.price.toFixed(2)}</p>
+        <p className="text-xl font-bold mt-1">Rs {product.selling_price.toFixed(2)}</p>
       </CardContent>
     </Card>
   );
