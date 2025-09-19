@@ -25,7 +25,7 @@ interface AppState {
 
   fetchTenants: (force?: boolean) => Promise<void>;
   fetchProducts: (tenantId: number) => Promise<void>;
-  fetchAllProducts: () => Promise<void>;
+  fetchAllProducts: (role?: CashierRole) => Promise<void>;
   fetchProductTypes: (role?: CashierRole) => Promise<void>;
   fetchCashiers: (force?: boolean) => Promise<void>;
   fetchEvents: (force?: boolean) => Promise<void>;
@@ -132,22 +132,57 @@ export const useStore = create<AppState>()(
         set({ products: data || [] });
       },
 
-      fetchAllProducts: async () => {
+      fetchAllProducts: async (role) => {
         if (!supabase) {
           console.log("Supabase not configured. Skipping fetchAllProducts.");
           set({ products: [] });
           return;
         }
-         const { data, error } = await supabase
-          .from('products')
-          .select('*');
 
-        if (error) {
-          console.error(`Error fetching all products:`, error);
-          set({ products: data || [] });
-          return;
+        if (role) {
+            // Fetch product types allowed for the role
+            const { data: roleData, error: roleError } = await supabase
+                .from('product_category_roles')
+                .select('product_type_id')
+                .eq('cashier_role', role);
+
+            if (roleError) {
+                console.error(`Error fetching product types for role ${role}:`, roleError);
+                set({ products: [] });
+                return;
+            }
+
+            const typeIds = roleData.map(r => r.product_type_id);
+            if (typeIds.length === 0) {
+                set({ products: [] });
+                return;
+            }
+
+            // Fetch products belonging to the allowed types
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .in('product_type_id', typeIds);
+
+            if (error) {
+                console.error('Error fetching filtered products:', error);
+                set({ products: [] });
+            } else {
+                set({ products: data || [] });
+            }
+        } else {
+            // Admin or no role specified, fetch all products
+            const { data, error } = await supabase
+              .from('products')
+              .select('*');
+
+            if (error) {
+              console.error(`Error fetching all products:`, error);
+              set({ products: [] });
+            } else {
+              set({ products: data || [] });
+            }
         }
-        set({ products: data || [] });
       },
 
       fetchProductTypes: async (role) => {
@@ -547,7 +582,7 @@ export const useStore = create<AppState>()(
             }
         }
         
-        await fetchAllProducts();
+        await fetchAllProducts(activeShift.role);
         
         // Create a unified object for the receipt
         const overallSubtotal = allItemsForReceipt.reduce((sum, item) => sum + item.price * item.quantity, 0);

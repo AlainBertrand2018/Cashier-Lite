@@ -76,21 +76,23 @@ export default function DashboardPage() {
 
       // Common fetches for both admin and cashier
       const promises = [
-        fetchAllProducts(),
         fetchTenants(true),
       ];
 
       if (activeAdmin) {
         setSelectedTenantId(null);
         promises.push(
+          fetchAllProducts(), // Admin fetches all products
           fetchEvents(true), 
           fetchCashiers(true),
           fetchProductTypes() // Admin needs all product types for category management
         );
       } else if (activeShift) {
-        // Cashier only fetches product types relevant to their role
-        // FIX: Pass the role from activeShift to fetchProductTypes
-        promises.push(fetchProductTypes(activeShift.role));
+        // Cashier fetches are filtered by their role
+        promises.push(
+            fetchAllProducts(activeShift.role), 
+            fetchProductTypes(activeShift.role)
+        );
       }
       
       await Promise.all(promises);
