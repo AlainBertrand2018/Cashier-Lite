@@ -22,14 +22,10 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
   const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
 
   const inventoryData = products.map(product => {
-    const unitsSold = orders.flatMap(o => o.items)
-                            .filter(item => item.id === product.id)
-                            .reduce((sum, item) => sum + item.quantity, 0);
-    // Note: product.stock here represents the current stock from the database, not initial stock.
+    const unitsSold = product.initial_stock - product.stock;
     const unitsLeft = product.stock; 
-    const initialStock = product.stock + unitsSold; // Infer initial stock for this session
-    const reorderThreshold = initialStock * 0.10;
-    const needsReorder = initialStock > 0 && unitsLeft <= reorderThreshold;
+    const reorderThreshold = product.initial_stock * 0.10;
+    const needsReorder = product.initial_stock > 0 && unitsLeft <= reorderThreshold;
 
 
     return {
@@ -143,7 +139,7 @@ export default function TenantReport({ tenant, orders, products }: TenantReportP
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {sortedOrders.length > 0 ? sortedOrders.flatMap((order) => [
+                        {sortedOrders.length > 0 ? sortedOrders.map((order) => [
                                 <TableRow key={order.id} className="bg-muted/50 hover:bg-muted/80">
                                     <TableCell className="font-medium">
                                         <div className="font-mono text-xs">ID: {order.id.split('-')[1]}</div>

@@ -119,7 +119,7 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Enter the details for the new product.
+            Enter the details for the new product. The initial stock will be set from the stock value provided.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -194,7 +194,7 @@ export default function AddProductDialog({ isOpen, onOpenChange, tenantId }: Add
               name="stock"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Stock</FormLabel>
+                  <FormLabel>Initial Stock</FormLabel>
                   <FormControl>
                     <Input type="number" step="1" {...field} />
                   </FormControl>

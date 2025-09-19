@@ -131,7 +131,7 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
           <DialogDescription>
-            Update the details for the product.
+            Update product details or add new stock. Changing 'Current Stock' will reset the initial stock value.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -206,7 +206,7 @@ export default function EditProductDialog({ isOpen, onOpenChange, product }: Edi
               name="stock"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Current Total Stock</FormLabel>
+                  <FormLabel>Current Stock</FormLabel>
                   <FormControl>
                     <Input type="number" step="1" {...field} />
                   </FormControl>

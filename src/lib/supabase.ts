@@ -35,6 +35,7 @@ export type Database = {
             selling_price: number;
             buying_price: number;
             stock: number;
+            initial_stock: number;
             product_type_id: number | null;
             tenant_id: number;
             created_at: string;
@@ -44,6 +45,7 @@ export type Database = {
             selling_price: number;
             buying_price: number;
             stock: number;
+            initial_stock: number;
             product_type_id: number | null;
             tenant_id: number;
         };
@@ -52,6 +54,7 @@ export type Database = {
             selling_price: number;
             buying_price: number;
             stock: number;
+            initial_stock: number;
             product_type_id: number | null;
         }>;
       },

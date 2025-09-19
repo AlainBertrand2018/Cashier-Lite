@@ -43,8 +43,8 @@ interface AppState {
   resetToTenantSelection: () => void;
   addTenant: (tenantData: Omit<Tenant, 'tenant_id' | 'created_at'>) => Promise<number | null>;
   deleteTenant: (tenantId: number) => Promise<void>;
-  addProduct: (productData: Omit<Product, 'id' | 'created_at'>) => Promise<Product | null>;
-  editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id'>>) => Promise<void>;
+  addProduct: (productData: Omit<Product, 'id' | 'created_at' | 'initial_stock'>) => Promise<Product | null>;
+  editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id' | 'initial_stock'>>) => Promise<void>;
   addStock: (productId: string, quantity: number) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   addCashier: (name: string, pin: string) => Promise<boolean>;
@@ -505,10 +505,15 @@ export const useStore = create<AppState>()(
           console.error('Supabase not configured. Cannot add product.');
           return null;
         }
+        
+        const dataToInsert = {
+            ...productData,
+            initial_stock: productData.stock,
+        };
 
         const { data, error } = await supabase
           .from('products')
-          .insert(productData)
+          .insert(dataToInsert)
           .select()
           .single();
 
@@ -530,9 +535,16 @@ export const useStore = create<AppState>()(
           return;
         }
 
+        const dataToUpdate = { ...productData };
+        // If stock is being manually set, reset initial_stock as well.
+        if (productData.stock !== undefined) {
+            (dataToUpdate as Product).initial_stock = productData.stock;
+        }
+
+
         const { data, error } = await supabase
           .from('products')
-          .update(productData)
+          .update(dataToUpdate)
           .eq('id', productId)
           .select()
           .single();
@@ -551,7 +563,7 @@ export const useStore = create<AppState>()(
         if (!supabase || quantity <= 0) {
           return;
         }
-         const { data, error } = await supabase.rpc('increment_product_stock', {
+         const { error } = await supabase.rpc('increment_product_stock', {
             p_product_id: productId,
             p_quantity_added: quantity,
         });

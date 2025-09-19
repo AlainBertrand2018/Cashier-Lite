@@ -8,19 +8,36 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import AddProductDialog from './add-product-dialog';
 import { Skeleton } from './ui/skeleton';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 function ProductCard({ product }: { product: Product }) {
   const { addProductToOrder, activeAdmin } = useStore();
+  const needsReorder = product.initial_stock > 0 && product.stock <= product.initial_stock * 0.1;
+  const isOutOfStock = product.stock <= 0;
 
   return (
     <Card 
-      className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer"
-      onClick={() => !activeAdmin && addProductToOrder(product)}
+      className={cn(
+        "flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer",
+        isOutOfStock && "opacity-50 cursor-not-allowed hover:shadow-sm"
+        )}
+      onClick={() => !activeAdmin && !isOutOfStock && addProductToOrder(product)}
     >
-      <CardContent className="flex-grow p-4 flex flex-col justify-center items-center text-center">
-        <p className="text-lg font-semibold">{product.name}</p>
-        <p className="text-xl font-bold mt-1">Rs {product.selling_price.toFixed(2)}</p>
-      </CardContent>
+        <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center">
+            <Badge 
+            variant={needsReorder ? 'destructive' : 'secondary'} 
+            className={cn(
+                'absolute top-2 right-2',
+                !needsReorder && !isOutOfStock && 'bg-green-500/20 text-green-700',
+                isOutOfStock && 'bg-gray-500/20 text-gray-700'
+            )}
+            >
+            {isOutOfStock ? 'Out of Stock' : `${product.stock} left`}
+            </Badge>
+            <p className="text-lg font-semibold mt-4">{product.name}</p>
+            <p className="text-xl font-bold mt-1">Rs {product.selling_price.toFixed(2)}</p>
+        </CardContent>
     </Card>
   );
 }
