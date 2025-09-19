@@ -34,6 +34,7 @@ export default function ManageCategoryRolesDialog({
 }: ManageCategoryRolesDialogProps) {
   const { productTypes, fetchProductTypes } = useStore();
   const { toast } = useToast();
+  const [initialCategoryRoles, setInitialCategoryRoles] = useState<CategoryRoleState>({});
   const [categoryRoles, setCategoryRoles] = useState<CategoryRoleState>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,6 +58,7 @@ export default function ManageCategoryRolesDialog({
               acc[row.product_type_id].push(row.cashier_role);
               return acc;
             }, {} as CategoryRoleState);
+            setInitialCategoryRoles(initialState);
             setCategoryRoles(initialState);
           }
         }
@@ -82,39 +84,67 @@ export default function ManageCategoryRolesDialog({
   const handleSaveChanges = async () => {
     if (!supabase) return;
     setIsSaving(true);
-    
-    // Flatten the state into a list of rows for insertion
-    const rolesToInsert = Object.entries(categoryRoles).flatMap(([typeId, roles]) => 
-        roles.map(role => ({
-            product_type_id: parseInt(typeId),
-            cashier_role: role
-        }))
-    );
-    
-    // Clear all existing roles first
-    const { error: deleteError } = await supabase.from('product_category_roles').delete().neq('cashier_role', 'this_is_a_placeholder_to_delete_all');
 
-    if (deleteError) {
-        console.error('Error clearing old roles:', deleteError);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to clear old role assignments.' });
-        setIsSaving(false);
-        return;
-    }
+    const rolesToDelete: { product_type_id: number; cashier_role: CashierRole }[] = [];
+    const rolesToInsert: { product_type_id: number; cashier_role: CashierRole }[] = [];
 
-    // Insert the new roles if there are any
-    if (rolesToInsert.length > 0) {
-        const { error: insertError } = await supabase.from('product_category_roles').insert(rolesToInsert);
-        if (insertError) {
-            console.error('Error saving new roles:', insertError);
-            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save new role assignments.' });
-            setIsSaving(false);
-            return;
+    // Compare initial state with current state to find changes
+    const allTypeIds = new Set([...Object.keys(initialCategoryRoles).map(Number), ...Object.keys(categoryRoles).map(Number)]);
+
+    allTypeIds.forEach(typeId => {
+      const initialRoles = initialCategoryRoles[typeId] || [];
+      const currentRoles = categoryRoles[typeId] || [];
+
+      // Find roles to delete
+      initialRoles.forEach(role => {
+        if (!currentRoles.includes(role)) {
+          rolesToDelete.push({ product_type_id: typeId, cashier_role: role });
         }
+      });
+
+      // Find roles to insert
+      currentRoles.forEach(role => {
+        if (!initialRoles.includes(role)) {
+          rolesToInsert.push({ product_type_id: typeId, cashier_role: role });
+        }
+      });
+    });
+
+    let hasError = false;
+
+    // Perform deletions
+    if (rolesToDelete.length > 0) {
+      for (const role of rolesToDelete) {
+        const { error } = await supabase
+          .from('product_category_roles')
+          .delete()
+          .match({ product_type_id: role.product_type_id, cashier_role: role.cashier_role });
+        
+        if (error) {
+          console.error('Error deleting role assignment:', error);
+          toast({ variant: 'destructive', title: 'Deletion Error', description: `Failed to remove role ${role.cashier_role} for type ${role.product_type_id}.` });
+          hasError = true;
+          break;
+        }
+      }
+    }
+
+    // Perform insertions
+    if (!hasError && rolesToInsert.length > 0) {
+      const { error } = await supabase.from('product_category_roles').insert(rolesToInsert);
+      if (error) {
+        console.error('Error inserting role assignments:', error);
+        toast({ variant: 'destructive', title: 'Insertion Error', description: 'Failed to save new role assignments.' });
+        hasError = true;
+      }
+    }
+
+    if (!hasError) {
+      toast({ title: 'Success', description: 'Category roles have been updated.' });
+      onOpenChange(false);
     }
     
-    toast({ title: 'Success', description: 'Category roles have been updated.' });
     setIsSaving(false);
-    onOpenChange(false);
   };
 
   return (
