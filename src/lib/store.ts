@@ -726,7 +726,7 @@ export const useStore = create<AppState>()(
         }
         const { error } = await supabase.rpc('set_active_event', { event_id_to_set: eventId });
         if (error) {
-            console.error('Error setting active event:', error);
+            console.error('Error setting active event:', JSON.stringify(error, null, 2));
             return;
         }
         await get().fetchEvents(true); // Force refresh to get the latest active state
