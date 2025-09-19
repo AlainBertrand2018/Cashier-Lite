@@ -447,7 +447,7 @@ export const useStore = create<AppState>()(
 
         if (productError) {
           console.error(`Error deleting products for tenant ${tenantId}:`, productError);
-          // Depending on requirements, you might want to stop here
+          return; // Stop execution if products can't be deleted
         }
 
         // Then, delete the tenant
