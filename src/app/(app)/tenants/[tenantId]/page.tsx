@@ -20,24 +20,17 @@ export default function TenantPage() {
     setSelectedTenantId, 
     lastCompletedOrder,
     resetToTenantSelection,
-    fetchTenants
+    fetchTenants,
+    getTenantById,
   } = useStore();
-
-  const [tenantName, setTenantName] = useState('Tenant');
   
-  const tenant = useStore((state) => state.getTenantById(parseInt(tenantId, 10)));
+  const tenant = getTenantById(parseInt(tenantId, 10));
 
   useEffect(() => {
     // Set the selected tenant in the store when the page loads
     fetchTenants();
     setSelectedTenantId(parseInt(tenantId, 10));
   }, [tenantId, setSelectedTenantId, fetchTenants]);
-
-  useEffect(() => {
-    if (tenant) {
-      setTenantName(tenant.name);
-    }
-  }, [tenant]);
 
   const isReceiptOpen = !!lastCompletedOrder;
   const setReceiptOpen = (isOpen: boolean) => {
@@ -58,7 +51,7 @@ export default function TenantPage() {
             </Link>
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">
-            {tenantName}
+            {tenant ? `${tenant.name} (${tenant.responsibleParty} • ${tenant.mobile})` : 'Tenant'}
           </h1>
         </div>
         {activeAdmin && (
