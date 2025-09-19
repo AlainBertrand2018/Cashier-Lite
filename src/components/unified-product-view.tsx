@@ -2,7 +2,7 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import type { Product, ProductType } from '@/lib/types';
+import type { Product, ProductType, Tenant } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import Image from 'next/image';
+import { Separator } from './ui/separator';
 
 function ProductCard({ product }: { product: Product }) {
   const { addProductToOrder } = useStore();
@@ -77,7 +78,6 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
               alt={category.name}
               width={48} 
               height={48} 
-              className="text-muted-foreground"
             />
             <p className="text-lg font-semibold">{category.name}</p>
         </CardContent>
@@ -86,12 +86,13 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
 }
 
 export default function UnifiedProductView() {
-  const { products, productTypes, fetchProductTypes } = useStore();
+  const { products, productTypes, tenants, fetchProductTypes, fetchTenants } = useStore();
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchProductTypes();
-  }, [fetchProductTypes]);
+    fetchTenants();
+  }, [fetchProductTypes, fetchTenants]);
 
   const selectedCategory = useMemo(() => {
     if (!selectedTypeId) return null;
@@ -102,6 +103,27 @@ export default function UnifiedProductView() {
     if (!selectedTypeId) return [];
     return products.filter(p => p.product_type_id === selectedTypeId);
   }, [selectedTypeId, products]);
+
+  const groupedProducts = useMemo(() => {
+    return productsInCategory.reduce((acc, product) => {
+      const tenantId = product.tenant_id;
+      if (!acc[tenantId]) {
+        acc[tenantId] = [];
+      }
+      acc[tenantId].push(product);
+      return acc;
+    }, {} as Record<number, Product[]>);
+  }, [productsInCategory]);
+
+  const tenantOrder = useMemo(() => {
+    return Object.keys(groupedProducts)
+      .map(Number)
+      .sort((a, b) => {
+        const tenantA = tenants.find(t => t.tenant_id === a);
+        const tenantB = tenants.find(t => t.tenant_id === b);
+        return tenantA?.name.localeCompare(tenantB?.name || '') || 0;
+      });
+  }, [groupedProducts, tenants]);
 
 
   if (selectedTypeId) {
@@ -119,11 +141,25 @@ export default function UnifiedProductView() {
                 </Button>
                 </CardHeader>
             </Card>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {productsInCategory.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                ))}
-            </div>
+            {tenantOrder.map(tenantId => {
+              const tenant = tenants.find(t => t.tenant_id === tenantId);
+              if (!tenant) return null;
+
+              return (
+                <div key={tenantId} className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Separator className="flex-1" />
+                    <h2 className="text-xl font-bold tracking-tight text-primary">{tenant.name}</h2>
+                    <Separator className="flex-1" />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {groupedProducts[tenantId].map(product => (
+                          <ProductCard key={product.id} product={product} />
+                      ))}
+                  </div>
+                </div>
+              )
+            })}
         </div>
      )
   }
