@@ -13,16 +13,20 @@ export default function TenantReportPage() {
   const params = useParams();
   const tenantId = parseInt(params.tenantId as string, 10);
   
-  const { tenants, completedOrders, fetchTenants } = useStore();
+  const { tenants, products, completedOrders, fetchTenants, fetchProducts } = useStore();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     fetchTenants();
-  }, [fetchTenants]);
+    if (tenantId) {
+      fetchProducts(tenantId);
+    }
+  }, [fetchTenants, fetchProducts, tenantId]);
 
   const tenant = tenants.find(t => t.tenant_id === tenantId);
   const tenantOrders = completedOrders.filter(o => o.tenantId === tenantId);
+  const tenantProducts = products.filter(p => p.tenant_id === tenantId);
 
   if (!isClient) {
     return (
@@ -60,7 +64,7 @@ export default function TenantReportPage() {
           <p className="text-muted-foreground">Detailed report for {tenant.name}</p>
         </div>
       </div>
-      <TenantReport tenant={tenant} orders={tenantOrders} />
+      <TenantReport tenant={tenant} orders={tenantOrders} products={tenantProducts} />
     </div>
   );
 }
