@@ -163,9 +163,12 @@ export default function DashboardPage() {
                   </Button>
                 }
                  onViewAll={() => handleViewAll('All Products', products, (item: Product) => 
-                  <div className="flex justify-between items-center">
-                    <span>{item.name}</span>
-                    <span className="text-xs text-muted-foreground">Rs {item.selling_price.toFixed(2)}</span>
+                  <div className="flex justify-between items-center w-full">
+                    <div>
+                      <span>{item.name}</span>
+                      <p className="text-xs text-muted-foreground">Rs {item.selling_price.toFixed(2)}</p>
+                    </div>
+                    <span className="text-xs font-mono bg-muted px-2 py-1 rounded-md">Stock: {item.stock}</span>
                   </div>
                 )}
                 isLoading={isLoading}
