@@ -47,6 +47,7 @@ interface AppState {
   editProduct: (productId: string, data: Partial<Omit<Product, 'id' | 'created_at' | 'tenant_id'>>) => Promise<void>;
   addStock: (productId: string, quantity: number) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
+  addCashier: (name: string, pin: string) => Promise<boolean>;
   getTenantById: (tenantId: number | null) => Tenant | undefined;
   syncOrders: () => Promise<{ success: boolean; syncedCount: number; error?: any }>;
   setReportingDone: (isDone: boolean) => void;
@@ -582,6 +583,24 @@ export const useStore = create<AppState>()(
             return;
         }
         await get().fetchProducts(productToDelete.tenant_id);
+      },
+
+      addCashier: async (name, pin) => {
+        if (!supabase) {
+          console.error('Supabase not configured. Cannot add cashier.');
+          return false;
+        }
+
+        const { error } = await supabase.from('cashiers').insert({ name, pin });
+
+        if (error) {
+          console.error('Error adding cashier:', error);
+          return false;
+        }
+
+        // Force a refresh of the cashiers list
+        await get().fetchCashiers(true);
+        return true;
       },
       
       syncOrders: async () => {
