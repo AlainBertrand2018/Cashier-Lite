@@ -121,15 +121,13 @@ export default function UnifiedProductView() {
           return (
              <Card key={tenant.tenant_id} className="overflow-hidden">
                 <AccordionItem value={`tenant-${tenant.tenant_id}`} className="border-b-0">
-                    <AccordionTrigger asChild className="p-4 hover:no-underline bg-muted/50">
-                      <div className="flex flex-1 items-center justify-between">
-                         <div className="flex items-center gap-4">
-                           <div className="text-3xl font-extrabold tracking-tighter">{tenant.tenant_id}</div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-left">{tenant.name}</h3>
-                              <p className="text-sm text-muted-foreground text-left">{tenant.mobile}</p>
-                            </div>
-                         </div>
+                    <AccordionTrigger className="p-4 hover:no-underline bg-muted/50">
+                       <div className="flex items-center gap-4">
+                         <div className="text-3xl font-extrabold tracking-tighter">{tenant.tenant_id}</div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-left">{tenant.name}</h3>
+                            <p className="text-sm text-muted-foreground text-left">{tenant.mobile}</p>
+                          </div>
                        </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-4">
