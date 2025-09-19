@@ -13,7 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Box } from 'lucide-react';
 import { Button } from './ui/button';
 import Image from 'next/image';
 
@@ -49,6 +49,17 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 function CategoryCard({ category, onSelect }: { category: ProductType, onSelect: () => void }) {
+  const getIconForCategory = (categoryName: string) => {
+    switch (categoryName.toLowerCase()) {
+      case 'non-alcoholic drinks':
+        return '/images/NAD.svg';
+      default:
+        return '/images/foodstuff.svg';
+    }
+  };
+
+  const iconSrc = getIconForCategory(category.name);
+  
   return (
      <Card 
       className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer"
@@ -56,7 +67,7 @@ function CategoryCard({ category, onSelect }: { category: ProductType, onSelect:
     >
         <CardContent className="relative flex-grow p-4 flex flex-col justify-center items-center text-center gap-4">
             <Image 
-              src="/images/foodstuff.svg" 
+              src={iconSrc}
               alt={category.name}
               width={48} 
               height={48} 
