@@ -2,6 +2,7 @@
 'use client';
 
 import AppHeader from '@/components/app-header';
+import AppFooter from '@/components/app-footer';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -41,6 +42,7 @@ export default function AppLayout({
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         {children}
       </main>
+      <AppFooter />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { useState } from 'react';
 import { Eraser } from 'lucide-react';
 import Image from 'next/image';
+import AppFooter from '@/components/app-footer';
 
 export default function LoginPage() {
   const { activeShift, activeAdmin, isReportingDone, clearCompletedOrders, completedOrders } = useStore();
@@ -84,6 +85,7 @@ export default function LoginPage() {
             </div>
         </div>
       </div>
+      <AppFooter />
       <AlertDialog
         open={isResetDialogOpen}
         onOpenChange={setIsResetDialogOpen}
