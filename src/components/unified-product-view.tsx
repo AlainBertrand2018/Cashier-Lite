@@ -52,11 +52,14 @@ function ProductCard({ product, iconSrc }: { product: Product, iconSrc?: string 
 
 function CategoryCard({ category, onSelect }: { category: ProductType, onSelect: () => void }) {
   const getIconForCategory = (categoryName: string) => {
-    switch (categoryName.toLowerCase()) {
-      case 'non-alcoholics':
-        return '/images/NAD.svg';
-      case 'ticketing':
-        return '/images/ticket.svg';
+    const name = categoryName.toLowerCase();
+    if (name.includes('non-alcoholics')) {
+      return '/images/NAD.svg';
+    }
+    if (name.includes('ticketing')) {
+      return '/images/ticket.svg';
+    }
+    switch (name) {
       case 'beer':
         return '/images/beer.svg';
       case 'wine':
