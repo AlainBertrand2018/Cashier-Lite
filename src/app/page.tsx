@@ -43,7 +43,7 @@ export default function LoginPage() {
     });
   };
   
-  // Don't render anything until hydration is complete to avoid flicker
+  // Don't render anything until hydration is complete to avoid flicker and race conditions.
   if (!_hasHydrated) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -52,7 +52,8 @@ export default function LoginPage() {
     );
   }
   
-  // If hydrated and logged in, let the useEffect handle redirect
+  // If hydrated and already logged in, let the useEffect handle the redirect.
+  // Render null to prevent the login form from flashing briefly.
   if (activeShift || activeAdmin) {
     return null;
   }
