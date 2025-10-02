@@ -18,36 +18,41 @@ export default function AppLayout({
 
 
   useEffect(() => {
-    // Hide loading screen after rehydration or a timeout
+    // Hide loading screen after rehydration is attempted.
     if (_hasHydrated) {
       setShowLoading(false);
     } else {
+      // Fallback for devices where rehydration might fail/stall.
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 2000); // 2-second fallback
+      }, 2000); 
       return () => clearTimeout(timer);
     }
   }, [_hasHydrated]);
 
   useEffect(() => {
-    // Only perform the check after the store has been rehydrated.
-    if (_hasHydrated) {
-      // Check if there's an active session (either shift or admin). 
-      // If not, redirect to the login page.
+    // Only perform the redirect check after the initial loading phase is over.
+    if (!showLoading) {
       if (!activeShift && !activeAdmin) {
         router.replace('/');
       }
     }
-  }, [_hasHydrated, activeShift, activeAdmin, router]);
+  }, [showLoading, activeShift, activeAdmin, router]);
 
-  // Render a loading state until the store is hydrated and the session is confirmed.
-  if (showLoading || !_hasHydrated || (!activeShift && !activeAdmin)) {
+  // Render a loading state until the store is hydrated or timeout is reached.
+  if (showLoading) {
     return (
        <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
       </div>
     );
   }
+  
+  // If not loading, but session is invalid, render nothing and let useEffect handle redirect.
+  if (!activeShift && !activeAdmin) {
+      return null;
+  }
+
 
   return (
     <div className="flex min-h-screen w-full flex-col">

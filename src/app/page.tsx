@@ -29,23 +29,27 @@ export default function LoginPage() {
   const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
-    // Hide loading screen after rehydration or a timeout
+    // Hide loading screen after rehydration is attempted.
     if (_hasHydrated) {
       setShowLoading(false);
     } else {
+      // Fallback for devices where rehydration might fail/stall.
       const timer = setTimeout(() => {
         setShowLoading(false);
-      }, 2000); // 2-second fallback
+      }, 2000); 
       return () => clearTimeout(timer);
     }
   }, [_hasHydrated]);
 
   useEffect(() => {
-    if (_hasHydrated && (activeShift || activeAdmin)) {
-      router.replace('/dashboard');
+    // Only perform the redirect check after the initial loading phase is over.
+    if (!showLoading) {
+      if (activeShift || activeAdmin) {
+        router.replace('/dashboard');
+      }
     }
-  }, [_hasHydrated, activeShift, activeAdmin, router]);
-
+  }, [showLoading, activeShift, activeAdmin, router]);
+  
   const handleResetShift = () => {
     clearCompletedOrders();
     setIsResetDialogOpen(false);
@@ -55,7 +59,7 @@ export default function LoginPage() {
     });
   };
   
-  // Don't render anything until hydration is complete (or timeout is reached) to avoid flicker.
+  // Show a loading screen until we've attempted hydration or the timeout has passed.
   if (showLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -64,12 +68,12 @@ export default function LoginPage() {
     );
   }
   
-  // If hydrated and already logged in, let the useEffect handle the redirect.
-  // Render null to prevent the login form from flashing briefly.
-  if (_hasHydrated && (activeShift || activeAdmin)) {
+  // If not loading, but user is logged in, render null and let the redirect effect handle it.
+  if (activeShift || activeAdmin) {
     return null;
   }
 
+  // If not loading and no active session, show the login page.
   return (
     <>
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
