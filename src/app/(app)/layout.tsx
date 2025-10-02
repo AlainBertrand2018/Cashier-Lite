@@ -54,8 +54,10 @@ export default function AppLayout({
       return null;
   }
 
-  // If hydration hasn't completed (e.g., on SUNMI), we still render the children
-  // to avoid getting stuck. The user will see the logged-out state of the dashboard.
+  // If a session exists, render the app.
+  // If hydration is still not complete after timeout (e.g. on SUNMI), 
+  // this will also render the app, letting the user see the logged-out state
+  // and preventing the app from being stuck.
   return (
     <div className="flex min-h-screen w-full flex-col">
       <AppHeader />

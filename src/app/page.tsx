@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
-    // Hide loading screen after rehydration is attempted.
+    // Hide loading screen after rehydration is attempted or a timeout occurs.
     if (_hasHydrated) {
       setShowLoading(false);
     } else {
@@ -43,12 +43,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Only perform the redirect check after the initial loading phase is over.
-    if (!showLoading) {
-      if (activeShift || activeAdmin) {
+    // We check _hasHydrated to ensure we don't redirect based on the initial empty state.
+    if (_hasHydrated && (activeShift || activeAdmin)) {
         router.replace('/dashboard');
-      }
     }
-  }, [showLoading, activeShift, activeAdmin, router]);
+  }, [_hasHydrated, activeShift, activeAdmin, router]);
   
   const handleResetShift = () => {
     clearCompletedOrders();
@@ -68,12 +67,13 @@ export default function LoginPage() {
     );
   }
   
-  // If not loading, but user is logged in, render null and let the redirect effect handle it.
-  if (activeShift || activeAdmin) {
+  // If not loading, but hydration is complete and a user is logged in, 
+  // render null and let the redirect effect handle it to prevent a flash of the login page.
+  if (_hasHydrated && (activeShift || activeAdmin)) {
     return null;
   }
 
-  // If not loading and no active session, show the login page.
+  // If not loading and no active session (or hydration failed), show the login page.
   return (
     <>
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
