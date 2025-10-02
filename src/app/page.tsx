@@ -26,24 +26,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
-    // Hide loading screen after rehydration is attempted or a timeout occurs.
-    if (_hasHydrated) {
-      setShowLoading(false);
-    } else {
-      // Fallback for devices where rehydration might fail/stall.
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 2000); 
-      return () => clearTimeout(timer);
-    }
-  }, [_hasHydrated]);
-
-  useEffect(() => {
-    // Only perform the redirect check after the initial loading phase is over.
-    // We check _hasHydrated to ensure we don't redirect based on the initial empty state.
     if (_hasHydrated && (activeShift || activeAdmin)) {
         router.replace('/dashboard');
     }
@@ -58,8 +42,8 @@ export default function LoginPage() {
     });
   };
   
-  // Show a loading screen until we've attempted hydration or the timeout has passed.
-  if (showLoading) {
+  // Wait until the store is rehydrated.
+  if (!_hasHydrated) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
@@ -67,13 +51,11 @@ export default function LoginPage() {
     );
   }
   
-  // If not loading, but hydration is complete and a user is logged in, 
-  // render null and let the redirect effect handle it to prevent a flash of the login page.
-  if (_hasHydrated && (activeShift || activeAdmin)) {
+  // If hydrated and logged in, render null to prevent flash of login page during redirect.
+  if (activeShift || activeAdmin) {
     return null;
   }
 
-  // If not loading and no active session (or hydration failed), show the login page.
   return (
     <>
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

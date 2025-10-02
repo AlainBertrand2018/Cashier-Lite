@@ -5,7 +5,7 @@ import AppHeader from '@/components/app-header';
 import AppFooter from '@/components/app-footer';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export default function AppLayout({
   children,
@@ -14,50 +14,28 @@ export default function AppLayout({
 }) {
   const router = useRouter();
   const { activeShift, activeAdmin, _hasHydrated } = useStore();
-  const [showLoading, setShowLoading] = useState(true);
-
 
   useEffect(() => {
-    // This effect ensures the loading screen is removed after hydration or a timeout.
-    if (_hasHydrated) {
-      setShowLoading(false);
-    } else {
-      // Fallback for devices where rehydration might fail/stall.
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 2000); 
-      return () => clearTimeout(timer);
-    }
-  }, [_hasHydrated]);
-
-  useEffect(() => {
-    // This effect runs AFTER the loading screen is hidden.
-    // It redirects only if we are certain there is no active session after hydration.
     if (_hasHydrated && !activeShift && !activeAdmin) {
       router.replace('/');
     }
   }, [_hasHydrated, activeShift, activeAdmin, router]);
 
-  // Render a loading state until the store is hydrated or timeout is reached.
-  if (showLoading) {
+  // Wait until the store is rehydrated before rendering the app.
+  if (!_hasHydrated) {
     return (
-       <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
       </div>
     );
   }
   
-  // After loading, if state has hydrated and there is still no session,
-  // render nothing while the useEffect above handles the redirect.
-  // This prevents a flash of content before the redirect occurs.
-  if (_hasHydrated && !activeShift && !activeAdmin) {
+  // If hydrated but no session, render nothing to avoid content flash during redirect.
+  if (!activeShift && !activeAdmin) {
       return null;
   }
 
   // If a session exists, render the app.
-  // If hydration is still not complete after timeout (e.g. on SUNMI), 
-  // this will also render the app, letting the user see the logged-out state
-  // and preventing the app from being stuck.
   return (
     <div className="flex min-h-screen w-full flex-col">
       <AppHeader />
