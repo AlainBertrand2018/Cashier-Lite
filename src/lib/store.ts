@@ -7,6 +7,7 @@ import type { Product, OrderItem, Order, Tenant, Cashier, ActiveShift, ActiveAdm
 import { supabase } from './supabase';
 
 interface AppState {
+  _hasHydrated: boolean;
   tenants: Tenant[];
   products: Product[];
   productTypes: ProductType[];
@@ -69,6 +70,7 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      _hasHydrated: false,
       tenants: [],
       products: [],
       productTypes: [],
@@ -900,7 +902,12 @@ export const useStore = create<AppState>()(
     {
       name: 'fids-cashier-lite-storage',
       storage: createJSONStorage(() => localStorage),
-       partialize: (state) => ({ 
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
+      partialize: (state) => ({ 
         completedOrders: state.completedOrders,
         cashiers: state.cashiers,
         activeShift: state.activeShift,
@@ -912,3 +919,5 @@ export const useStore = create<AppState>()(
     }
   )
 );
+
+    

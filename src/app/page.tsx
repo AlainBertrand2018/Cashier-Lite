@@ -23,16 +23,16 @@ import Image from 'next/image';
 import AppFooter from '@/components/app-footer';
 
 export default function LoginPage() {
-  const { activeShift, activeAdmin, isReportingDone, clearCompletedOrders, completedOrders } = useStore();
+  const { activeShift, activeAdmin, isReportingDone, clearCompletedOrders, completedOrders, _hasHydrated } = useStore();
   const router = useRouter();
   const { toast } = useToast();
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (activeShift || activeAdmin) {
+    if (_hasHydrated && (activeShift || activeAdmin)) {
       router.replace('/dashboard');
     }
-  }, [activeShift, activeAdmin, router]);
+  }, [_hasHydrated, activeShift, activeAdmin, router]);
 
   const handleResetShift = () => {
     clearCompletedOrders();
@@ -43,7 +43,16 @@ export default function LoginPage() {
     });
   };
   
-  // Don't render anything until the check is complete to avoid flicker
+  // Don't render anything until hydration is complete to avoid flicker
+  if (!_hasHydrated) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+  
+  // If hydrated and logged in, let the useEffect handle redirect
   if (activeShift || activeAdmin) {
     return null;
   }
@@ -109,3 +118,5 @@ export default function LoginPage() {
     </>
   );
 }
+
+    

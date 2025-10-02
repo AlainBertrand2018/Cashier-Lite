@@ -13,22 +13,21 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [isSessionChecked, setIsSessionChecked] = useState(false);
+  const { activeShift, activeAdmin, _hasHydrated } = useStore();
 
   useEffect(() => {
-    // Access the store only on the client-side within useEffect
-    const { activeShift, activeAdmin } = useStore.getState();
-    
-    // Check if there's an active session (either shift or admin). If not, redirect to the login page.
-    if (!activeShift && !activeAdmin) {
-      router.replace('/');
-    } else {
-      setIsSessionChecked(true);
+    // Only perform the check after the store has been rehydrated.
+    if (_hasHydrated) {
+      // Check if there's an active session (either shift or admin). 
+      // If not, redirect to the login page.
+      if (!activeShift && !activeAdmin) {
+        router.replace('/');
+      }
     }
-  }, [router]);
+  }, [_hasHydrated, activeShift, activeAdmin, router]);
 
-  // Render a loading state or nothing until the session check is complete
-  if (!isSessionChecked) {
+  // Render a loading state until the store is hydrated and the session is confirmed.
+  if (!_hasHydrated || (!activeShift && !activeAdmin)) {
     return (
        <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
@@ -46,3 +45,5 @@ export default function AppLayout({
     </div>
   );
 }
+
+    
