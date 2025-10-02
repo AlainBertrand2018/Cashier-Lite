@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/login-form';
@@ -17,7 +17,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useState } from 'react';
 import { Eraser } from 'lucide-react';
 import Image from 'next/image';
 import AppFooter from '@/components/app-footer';
@@ -27,6 +26,19 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    // Hide loading screen after rehydration or a timeout
+    if (_hasHydrated) {
+      setShowLoading(false);
+    } else {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 2000); // 2-second fallback
+      return () => clearTimeout(timer);
+    }
+  }, [_hasHydrated]);
 
   useEffect(() => {
     if (_hasHydrated && (activeShift || activeAdmin)) {
@@ -43,8 +55,8 @@ export default function LoginPage() {
     });
   };
   
-  // Don't render anything until hydration is complete to avoid flicker and race conditions.
-  if (!_hasHydrated) {
+  // Don't render anything until hydration is complete (or timeout is reached) to avoid flicker.
+  if (showLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
@@ -54,7 +66,7 @@ export default function LoginPage() {
   
   // If hydrated and already logged in, let the useEffect handle the redirect.
   // Render null to prevent the login form from flashing briefly.
-  if (activeShift || activeAdmin) {
+  if (_hasHydrated && (activeShift || activeAdmin)) {
     return null;
   }
 
@@ -119,5 +131,3 @@ export default function LoginPage() {
     </>
   );
 }
-
-    
