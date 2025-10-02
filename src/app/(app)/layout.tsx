@@ -18,7 +18,7 @@ export default function AppLayout({
 
 
   useEffect(() => {
-    // Hide loading screen after rehydration is attempted.
+    // This effect ensures the loading screen is removed after hydration or a timeout.
     if (_hasHydrated) {
       setShowLoading(false);
     } else {
@@ -31,13 +31,12 @@ export default function AppLayout({
   }, [_hasHydrated]);
 
   useEffect(() => {
-    // Only perform the redirect check after the initial loading phase is over.
-    if (!showLoading) {
-      if (!activeShift && !activeAdmin) {
-        router.replace('/');
-      }
+    // This effect runs AFTER the loading screen is hidden.
+    // It redirects only if we are certain there is no active session after hydration.
+    if (_hasHydrated && !activeShift && !activeAdmin) {
+      router.replace('/');
     }
-  }, [showLoading, activeShift, activeAdmin, router]);
+  }, [_hasHydrated, activeShift, activeAdmin, router]);
 
   // Render a loading state until the store is hydrated or timeout is reached.
   if (showLoading) {
@@ -48,12 +47,15 @@ export default function AppLayout({
     );
   }
   
-  // If not loading, but session is invalid, render nothing and let useEffect handle redirect.
-  if (!activeShift && !activeAdmin) {
+  // After loading, if state has hydrated and there is still no session,
+  // render nothing while the useEffect above handles the redirect.
+  // This prevents a flash of content before the redirect occurs.
+  if (_hasHydrated && !activeShift && !activeAdmin) {
       return null;
   }
 
-
+  // If hydration hasn't completed (e.g., on SUNMI), we still render the children
+  // to avoid getting stuck. The user will see the logged-out state of the dashboard.
   return (
     <div className="flex min-h-screen w-full flex-col">
       <AppHeader />
