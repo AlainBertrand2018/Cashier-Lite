@@ -16,6 +16,9 @@ import Image from 'next/image';
 import { useStore } from '@/lib/store';
 import { useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -35,13 +38,19 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   }, [order, fetchTenants, fetchEvents]);
 
   const handlePrint = () => {
-    const printContents = document.getElementById('receipt-content')?.innerHTML;
-    const originalContents = document.body.innerHTML;
-    if (printContents) {
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      window.location.reload(); 
+    const receiptContent = document.getElementById('receipt-content');
+    if (receiptContent) {
+      html2canvas(receiptContent, { scale: 2 }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.autoPrint();
+        window.open(pdf.output('bloburl'), '_blank');
+      });
     }
   };
   
@@ -187,6 +196,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
       <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" onInteractOutside={(e) => e.preventDefault()}>
         <div className="flex-grow overflow-y-auto pr-6 -mr-6">
             <div id="receipt-content">
+              {/* This style block is no longer needed for the jspdf method but kept just in case */}
               <style>
                 {`
                   @media print {
@@ -212,7 +222,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                 `}
               </style>
 
-              <div className="receipt-instance">
+              <div className="receipt-instance p-4 bg-white text-black">
                 <DialogHeader className="items-center text-center">
                   <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
                   <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
@@ -232,7 +242,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
                  if (!tenant || !constituentOrder) return null;
 
                  return (
-                    <div className="receipt-instance" key={tenantId}>
+                    <div className="receipt-instance p-4 bg-white text-black" key={tenantId}>
                         <DialogHeader className="items-center text-center">
                         <Image src="/images/logo_1024.webp" alt="FIDS Cashier Lite Logo" width={40} height={40} className="mb-2" />
                         <DialogTitle className="text-2xl">FIDS Cashier Lite</DialogTitle>
