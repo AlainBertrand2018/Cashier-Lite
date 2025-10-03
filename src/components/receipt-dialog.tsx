@@ -16,9 +16,6 @@ import Image from 'next/image';
 import { useStore } from '@/lib/store';
 import { useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-
 
 interface ReceiptDialogProps {
   isOpen: boolean;
@@ -38,20 +35,7 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
   }, [order, fetchTenants, fetchEvents]);
 
   const handlePrint = () => {
-    const receiptContent = document.getElementById('receipt-content');
-    if (receiptContent) {
-      html2canvas(receiptContent, { scale: 2 }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
-        });
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.autoPrint();
-        window.open(pdf.output('bloburl'), '_blank');
-      });
-    }
+    window.print();
   };
   
   const tenantMap = useMemo(() => new Map(tenants.map(t => [t.tenant_id, t])), [tenants]);
@@ -196,7 +180,6 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
       <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]" onInteractOutside={(e) => e.preventDefault()}>
         <div className="flex-grow overflow-y-auto pr-6 -mr-6">
             <div id="receipt-content">
-              {/* This style block is no longer needed for the jspdf method but kept just in case */}
               <style>
                 {`
                   @media print {
@@ -273,5 +256,3 @@ export default function ReceiptDialog({ isOpen, onOpenChange, order }: ReceiptDi
     </Dialog>
   );
 }
-
-    
